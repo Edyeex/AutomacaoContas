@@ -1,0 +1,558 @@
+--- CONTENT OF DiagramaPDS.pdf ---
+AutoDownload
+extend
+Usuário
+Operadora Externa
+Fazer Cadastro
+Fazer Login
+Recuperar Senha
+Cadastrar Conta
+Editar Conta
+Remover Conta
+Iniciar Automação
+Realizar Login na Operadora
+Buscar Boleto
+Baixar Boleto
+Visualizar Boletos
+Consultar Histórico
+Receber Notificação
+
+
+
+--- CONTENT OF Levantamento de requisitos funcionais e não funcionais.pdf ---
+AutoDownload 
+ 
+Este documento tem como objetivo descrever detalhadamente os requisitos do sistema 
+AutoDownload, uma aplicação web destinada à automação do processo de obtenção de 
+boletos de contas recorrentes, como energia, água, internet e telefonia. 
+ 
+O sistema permitirá que usuários cadastrem suas contas e credenciais de acesso, para que 
+um mecanismo automatizado realize o login nos portais das operadoras e faça o download 
+dos boletos de forma periódica, armazenando-os de maneira organizada. 
+ 
+Definições, Acrônimos e Abreviações 
+Termo 
+Definição 
+Boleto 
+Documento de cobrança bancária 
+Automação 
+Web 
+Processo automatizado de interação com 
+sites 
+LGPD 
+Lei Geral de Proteção de Dados 
+RF 
+Requisito Funcional 
+RNF 
+Requisito Não Funcional 
+ 
+Descrição Geral 
+O sistema será uma aplicação web baseada em arquitetura MVC, podendo utilizar 
+tecnologias como ASP.NET Core, banco de dados relacional e ferramentas de automação 
+como Playwright. 
+ 
+Funções do Produto 
+●​ Cadastro e autenticação de usuários. 
+●​ Cadastro de contas e operadoras. 
+●​ Automação de login em portais externos. 
+●​ Download automático de boletos. 
+●​ Armazenamento e organização de arquivos. 
+●​ Exibição de histórico de downloads. 
+
+●​ Notificações ao usuário 
+ 
+Características dos Usuários 
+Tipo de Usuário 
+Características 
+Usuário comum 
+Pouco conhecimento técnico, deseja 
+praticidade. 
+Administrador (opcional) 
+Gerencia o sistema e monitora o 
+funcionamento dele. 
+ 
+Restrições 
+●​ Limite de até 3 contas por usuário. 
+●​ Dependência de estrutura dos sites das operadoras. 
+●​ Necessidade de armazenamento seguro de credenciais. 
+●​ Possíveis bloqueios por mecanismos de segurança (CAPTCHA). 
+ 
+Suposições e Dependências 
+●​ Usuários possuem acesso à internet. 
+●​ Portais das operadoras permitem login automatizado. 
+●​ O sistema terá acesso a serviços de armazenamento. 
+ 
+Requisitos Específicos 
+ 
+Requisitos Funcionais (RF) 
+ID 
+Requisito 
+Descrição 
+RF01 Cadastro de usuário 
+Permitir registro de novos usuários 
+RF02 Autenticação 
+Permitir login e logout 
+RF03 Cadastro de contas 
+Permitir cadastro de contas e operadoras 
+RF04 Armazenamento de 
+credenciais 
+Armazenar dados de acesso de forma 
+segura 
+RF05 Automação de login 
+Acessar automaticamente os portais 
+
+RF06 Download de boletos 
+Baixar boletos automaticamente 
+RF07 Histórico 
+Exibir histórico de downloads 
+RF08 Consulta de boletos 
+Permitir acesso a boletos anteriores 
+RF09 Notificação 
+Notificar usuário sobre novos boletos 
+RF10 Gerenciamento de contas 
+Editar/remover contas cadastradas 
+ 
+Requisitos Não Funcionais (RNF) 
+Segurança 
+●​ RNF01: O sistema deve criptografar credenciais sensíveis. 
+●​ RNF02: O sistema deve armazenar senhas com hashing seguro. 
+●​ RNF03: O sistema deve estar em conformidade com a LGPD. 
+Desempenho 
+●​ RNF04: O sistema deve executar automações em tempo aceitável. 
+●​ RNF05: O sistema deve suportar múltiplas requisições simultâneas. 
+Usabilidade 
+●​ RNF06: O sistema deve possuir interface intuitiva. 
+●​ RNF07: O sistema deve ser acessível via navegador web. 
+Confiabilidade 
+●​ RNF08: O sistema deve executar automações periodicamente sem falhas. 
+●​ RNF09: O sistema deve registrar logs de execução. 
+Disponibilidade 
+●​ RNF10: O sistema deve estar disponível 24/7. 
+Escalabilidade 
+●​ RNF11: O sistema deve suportar crescimento no número de usuários. 
+ 
+Modelos do Sistema 
+Casos de Uso 
+Ator da situação: Usuário 
+
+●​ Cadastrar-se. 
+●​ Fazer login. 
+●​ Cadastrar contas. 
+●​ Visualizar boletos. 
+●​ Acompanhar histórico. 
+ 
+Diagrama (descrição) 
+●​ Usuário → Sistema → Operadora. 
+●​ Sistema → Banco de Dados. 
+●​ Sistema → Robô de Automação. 
+ 
+Critérios de Aceitação 
+●​ O usuário deve conseguir cadastrar contas com sucesso. 
+●​ O sistema deve baixar os boletos automaticamente. 
+●​ O histórico deve ser atualizado corretamente. 
+●​ Dados sensíveis devem estar protegidos. 
+ 
+O sistema AutoDownload (nome provisório)  propõe uma solução automatizada para um 
+problema recorrente da sociedade digital, reduzindo o esforço manual, minimizando falhas 
+humanas e promovendo maior organização financeira. 
+ 
+
+
+
+--- CONTENT OF Proposta_de_Projeto (1).pdf ---
+ 
+AUTODOWNLOAD 
+Éder Casagranda 
+Orientador: Lucas Fogaça 
+edercasagranda@rede.ulbra.br, lucas.fogaca@ulbra.br 
+Análise e Desenvolvimento de Sistemas 
+Universidade Luterana do Brasil (ULBRA) 
+Canoas – RS – Brasil 
+dd de agosto de 2020 
+ 
+1 TEMA / OBJETIVO (O quê?) 
+No contexto da sociedade contemporânea, caracterizada pela aceleração digital e pela 
+multiplicação de serviços baseados na web, a gestão das finanças pessoais tornou-se uma 
+atividade de complexidade crescentemente subestimada. O avanço da digitalização dos 
+serviços, embora tenha trazido inúmeras facilidades e eliminado a necessidade de 
+deslocamentos físicos para agências e postos de atendimento, também fragmentou a 
+experiência do usuário de uma maneira sem precedentes. O cidadão comum, que antes podia 
+receber todas as suas contas em papel no endereço de sua residência, agora precisa navegar 
+por um verdadeiro labirinto de ambientes virtuais distintos para cumprir com obrigações 
+financeiras básicas. Cada concessionária de serviço público — seja de energia elétrica, 
+abastecimento de água, distribuição de gás — e cada prestadora de serviços essenciais — 
+como operadoras de telefonia fixa e móvel, provedores de internet banda larga e serviços de 
+TV por assinatura — mantém seu próprio portal web, com sistemas de login independentes, 
+interfaces completamente diferentes e fluxos de navegação proprietários para a emissão da 
+segunda via de boletos. 
+ 
+Dentre as obrigações financeiras recorrentes, destaca-se o pagamento dessas contas de 
+consumo, cujos documentos de cobrança — popularmente conhecidos como boletos bancários 
+— são, na imensa maioria dos casos, disponibilizados exclusivamente nesses ambientes 
+virtuais. O processo atual, majoritariamente manual, impõe uma carga cognitiva e operacional 
+desnecessária ao usuário, que mensalmente precisa: (a) lembrar-se ativamente de quais 
+contas vencerão no período, (b) acessar individualmente cada site das respectivas empresas, 
+(c) realizar o processo de login com credenciais frequentemente diferentes para cada portal, (d) 
+localizar, dentro da estrutura de navegação de cada site, a seção específica para emissão de 
+ 
+
+ 
+segunda via, (e) selecionar o mês de referência correto ou identificar o boleto em aberto, (f) 
+efetuar o download do arquivo PDF ou, em alguns casos, imprimir diretamente o documento, e 
+(g) organizar esse arquivo em alguma estrutura de pastas em seu computador ou dispositivo 
+móvel para localização futura. 
+ 
+Esse cenário, que à primeira vista pode parecer um mero incômodo passageiro ou uma 
+questão de menor importância, revela-se, sob uma análise mais aprofundada, como um 
+problema com múltiplas camadas de complexidade e consequências significativas para a vida 
+financeira e o bem-estar do indivíduo. Em primeiro lugar, há a dimensão temporal: a atividade, 
+apesar de simples em cada uma de suas etapas isoladas, é profundamente repetitiva e 
+cumulativa. Cada operação individual pode consumir de dois a cinco minutos, dependendo da 
+velocidade da conexão, da usabilidade do site e da familiaridade do usuário com a interface. 
+Quando multiplicamos esse tempo pelo número médio de contas de uma família brasileira 
+típica — que pode facilmente alcançar cinco ou seis contas entre energia, água, internet, 
+telefonia, gás e TV —, o tempo mensal despendido pode variar entre dez e trinta minutos. 
+Projetado para um período de um ano, esse número pode alcançar entre duas e seis horas de 
+trabalho braçal e improdutivo. Horas que poderiam ser dedicadas ao lazer, à família, ao estudo 
+ou a atividades profissionais mais relevantes são consumidas por uma tarefa que um software 
+poderia executar de forma autônoma, rápida e precisa. O custo de oportunidade dessa 
+atividade manual, portanto, é significativamente mais alto do que aparenta. 
+ 
+Em segundo lugar, e talvez mais importante, há a dimensão do risco financeiro e da falibilidade 
+humana. A dependência exclusiva da memória do usuário para executar uma tarefa crítica 
+dentro de um prazo estipulado é intrinsecamente frágil. Estudos consolidados no campo da 
+psicologia cognitiva demonstram que a memória de trabalho humana é limitada em sua 
+capacidade e suscetível a falhas, especialmente quando o indivíduo está sobrecarregado por 
+múltiplas responsabilidades profissionais, familiares e sociais. Em um mês atípico, com 
+viagens, problemas de saúde ou picos de estresse, a tarefa de acessar os portais e baixar os 
+boletos pode ser simplesmente esquecida. Um único esquecimento pode resultar no não 
+pagamento de uma conta dentro do prazo de vencimento, acarretando a incidência automática 
+de multas contratuais e juros de mora, que comprometem o orçamento familiar 
+cuidadosamente planejado. Em casos mais graves, o atraso recorrente pode levar à suspensão 
+de serviços essenciais como energia elétrica, abastecimento de água ou conectividade com a 
+internet, esta última cada vez mais reconhecida como serviço essencial para o trabalho, o 
+estudo e a sociabilização na era digital. As consequências, portanto, extrapolam o mero 
+ 
+
+ 
+desembolso financeiro adicional e atingem a própria qualidade de vida e a capacidade de 
+participação social do indivíduo. 
+ 
+Em terceiro lugar, há a dimensão organizacional e de arquivamento. Os boletos baixados 
+manualmente tendem a se acumular de forma desordenada em pastas de download padrão 
+dos navegadores, em diretórios temporários do sistema operacional ou espalhados por 
+diferentes dispositivos que o usuário utiliza ao longo do mês (computador do trabalho, notebook 
+pessoal, smartphone, tablet). Essa dispersão dificulta enormemente a localização futura do 
+documento para comprovação de pagamento junto ao banco, para conferência de valores 
+cobrados em meses subsequentes, para planejamento financeiro ou mesmo para declaração 
+de imposto de renda, onde comprovantes de despesas podem ser relevantes. A falta de uma 
+organização sistemática transforma um conjunto de documentos financeiros importantes em 
+um amontoado caótico de arquivos com nomes genéricos como "boleto.pdf" ou "2via.pdf", 
+tornando a tarefa de encontrar um boleto específico de meses atrás uma verdadeira "agulha no 
+palheiro" digital. 
+ 
+É diante dessa problemática multifacetada e profundamente enraizada no cotidiano do cidadão 
+brasileiro que o presente trabalho propõe o desenvolvimento do sistema "AutoDownload". 
+Trata-se de uma aplicação web destinada a automatizar integralmente o processo de download 
+de boletos recorrentes, eliminando a necessidade de intervenção manual do usuário em todas 
+as etapas descritas anteriormente. A questão central que norteia esta pesquisa e este 
+desenvolvimento pode ser formulada nos seguintes termos: "Como a aplicação integrada de 
+técnicas modernas de automação web, engenharia de software e boas práticas de segurança 
+da informação pode reduzir significativamente, ou mesmo eliminar por completo, a intervenção 
+manual e os riscos financeiros e organizacionais associados à gestão de boletos de consumo 
+recorrentes em portais heterogêneos?" 
+ 
+O objetivo geral do projeto é, portanto, conceber, projetar, implementar e validar um sistema 
+funcional que atue como um agente autônomo em nome do usuário, poupando-o integralmente 
+das tarefas braçais de navegação e download. Para que esse objetivo macro seja alcançado de 
+maneira estruturada e verificável, faz-se necessário desdobrá-lo em um conjunto de objetivos 
+específicos, cada um representando um subsistema ou funcionalidade crítica do produto final. 
+São eles: 
+ 
+ 
+
+ 
+Objetivo Específico 1 - Gerenciamento Seguro de Perfis: Implementar um módulo completo de 
+cadastro e autenticação de usuários, fundamentado em práticas consagradas de segurança da 
+informação. Este módulo deverá permitir o registro de novos perfis, o login com credenciais 
+devidamente hashadas e protegidas, a recuperação de senha e a gestão de dados pessoais, 
+tudo em conformidade com os princípios estabelecidos pela Lei Geral de Proteção de Dados 
+(LGPD), garantindo que as informações dos usuários sejam tratadas com o mais absoluto rigor 
+e privacidade. 
+ 
+Objetivo Específico 2 - Cadastro de Contas e Operadoras: Desenvolver as funcionalidades 
+necessárias para que o usuário possa cadastrar e gerenciar as empresas/operadoras das quais 
+deseja obter boletos, bem como as contas específicas vinculadas a cada uma delas. Isso inclui 
+o armazenamento seguro das credenciais de acesso aos portais externos, utilizando técnicas 
+de criptografia simétrica para que, mesmo em caso de acesso não autorizado ao banco de 
+dados, as senhas dos usuários nos sites das concessionárias permaneçam protegidas. Por 
+uma decisão de escopo consciente e realista para um Trabalho de Conclusão de Curso, o 
+sistema limitará a três o número máximo de contas ativas por perfil de usuário, focando no 
+usuário doméstico típico. 
+ 
+Objetivo Específico 3 - Automação Autônoma da Busca: Construir um motor de automação, 
+baseado em ferramentas modernas como o Playwright ou Selenium, capaz de, de forma 
+periódica e completamente autônoma, acessar os portais das operadoras cadastradas, 
+executar os fluxos de login e navegação específicos de cada uma, localizar o boleto referente 
+ao mês corrente e efetuar o download do arquivo correspondente. Este motor deverá ser 
+resiliente a pequenas variações nos sites e capaz de registrar logs detalhados de suas 
+operações. 
+ 
+Objetivo Específico 4 - Histórico e Rastreabilidade: Disponibilizar ao usuário um painel de 
+controle intuitivo e de fácil compreensão, contendo o histórico completo de todas as execuções 
+do robô de automação. Para cada tentativa de download, o sistema deverá registrar e exibir 
+informações como data e hora da execução, empresa acessada, status da operação (sucesso, 
+falha de login, boleto não disponível, erro de conexão, etc.) e um link para acesso ao arquivo 
+baixado (quando aplicável). Esse histórico confere transparência ao processo e permite ao 
+usuário rastrear e auditar as ações executadas automaticamente em seu nome. 
+ 
+ 
+
+ 
+Dessa forma, o projeto se propõe a ser mais do que um simples organizador de contas; ele se 
+apresenta como um assistente financeiro digital autônomo, que assume para si a 
+responsabilidade pela tarefa repetitiva e crítica de obtenção dos boletos, liberando o usuário 
+para atividades mais nobres e garantindo, acima de tudo, que prazos sejam cumpridos e que a 
+organização financeira seja mantida de forma consistente e confiável. 
+ 
+2 METODOLOGIA (Como?) 
+A escolha por uma abordagem híbrida, inspirada nos princípios ágeis, justifica-se pela 
+necessidade de flexibilidade para incorporar aprendizados durante as fases de automação, 
+onde os desafios são imprevisíveis, e pela clareza na entrega de valor em cada ciclo de 
+desenvolvimento. O trabalho será dividido em quatro grandes fases: Fundamentação e 
+Levantamento, Modelagem e Arquitetura, Desenvolvimento Incremental e, por fim, Validação e 
+Testes. 
+ 
+Fase 1 - Fundamentação Teórica e Levantamento de Requisitos Detalhado: 
+Esta etapa inicial irá além de uma simples listagem de funções. Será realizada uma pesquisa 
+bibliográfica aprofundada para embasar as decisões técnicas e de design. Os pilares dessa 
+pesquisa incluirão: (a) Segurança da Informação e LGPD: estudo de boas práticas para 
+armazenamento seguro de credenciais (hashing, criptografia simétrica para dados sensíveis), 
+políticas de sessão e conformidade com a Lei Geral de Proteção de Dados, visando garantir 
+que as informações de login dos usuários nos portais das operadoras sejam tratadas com o 
+mais alto nível de segurança; (b) Técnicas de Automação Web: análise comparativa entre as 
+principais ferramentas disponíveis, como Selenium WebDriver e Playwright, avaliando critérios 
+como facilidade de uso, suporte a diferentes navegadores, velocidade de execução e 
+capacidade de lidar com páginas dinâmicas e JavaScript pesado (Single Page Applications - 
+SPAs), comuns em portais modernos; (c) Padrões de Projeto: pesquisa sobre padrões como 
+Repository para abstração do banco de dados, Strategy para lidar com os diferentes fluxos de 
+automação de cada operadora, e Singleton para gerenciar instâncias do robô, garantindo um 
+código mais limpo, testável e de fácil manutenção. Paralelamente, será conduzido um 
+levantamento de requisitos com potenciais usuários para entender a fundo as dores do 
+processo e mapear as operadoras mais comuns a serem suportadas na primeira versão do 
+sistema. 
+ 
+ 
+
+ 
+Fase 2 - Modelagem e Definição da Arquitetura da Solução: 
+Com os requisitos consolidados, a solução será modelada utilizando a Linguagem de 
+Modelagem Unificada (UML). Serão elaborados: Diagrama de Casos de Uso para ilustrar as 
+interações dos atores (Usuário e Sistema) com as funcionalidades; Diagrama de Classes para 
+representar a estrutura estática do sistema, incluindo entidades como Usuario, Empresa, Conta 
+e Histórico de Download; Diagrama de Sequência para detalhar o fluxo de interação entre os 
+componentes durante o processo de automação, desde o agendamento até a notificação ao 
+usuário. A arquitetura do sistema será baseada no padrão Model-View-Controller (MVC), 
+utilizando o ASP.NET Core, o que promoverá a separação clara entre a lógica de apresentação 
+(front-end), as regras de negócio e o acesso a dados. Será definido o modelo 
+entidade-relacionamento (MER) para o banco de dados, com a normalização adequada das 
+tabelas, e serão criados protótipos de interface de baixa e alta fidelidade para validar a 
+experiência do usuário (UX) antes da codificação, garantindo que o painel de controle e o 
+histórico sejam intuitivos e de fácil compreensão. 
+Fase 3 - Desenvolvimento Incremental (Sprints): 
+A implementação seguirá um ciclo incremental, com entregas parciais e funcionais. Cada 
+"sprint" terá um objetivo claro: 
+ 
+*Sprint 1 - Base do Sistema:* Implementação da camada de persistência com o banco de 
+dados PostgreSQL, criação do modelo de domínio e desenvolvimento do módulo de cadastro e 
+autenticação de usuários com ASP.NET Core Identity, garantindo gerenciamento seguro de 
+senhas e claims. 
+ 
+*Sprint 2 - Módulo de Cadastro:* Desenvolvimento das funcionalidades de CRUD (Create, 
+Read, Update, Delete) para Empresas e Contas do usuário. Será nessa etapa que a interface 
+com o usuário (Blazor ou Razor Pages) começará a tomar forma, permitindo o cadastro das 
+credenciais de acesso aos portais externos. A criptografia dessas credenciais no banco de 
+dados será um dos focos principais desta sprint. 
+ 
+*Sprint 3 - Núcleo de Automação:* Implementação do serviço de automação utilizando a 
+ferramenta escolhida (Playwright). Será desenvolvida uma estrutura flexível (aplicando o 
+padrão Strategy) que permita a criação de "scripts de automação" específicos para cada 
+ 
+
+ 
+operadora. Inicialmente, o robô será capaz de operar com uma ou duas operadoras piloto para 
+validação do conceito. 
+ 
+*Sprint 4 - Agendamento e Histórico:* Criação de um serviço em segundo plano (Background 
+Service) no ASP.NET Core para agendar a execução periódica do robô (ex: a cada 5 dias). 
+Implementação do painel de histórico, que registrará todas as tentativas de download, seus 
+status (sucesso, falha de login, boleto não disponível, etc.) e o horário da execução. 
+ 
+*Sprint 5 - Refinamento e Testes:* Integração de todos os módulos, polimento da interface, 
+implementação de feedback ao usuário (como notificações visuais) e execução da bateria de 
+testes completa. 
+ 
+Fase 4 - Validação e Testes: 
+A qualidade do software será garantida por meio de uma estratégia de testes em múltiplos 
+níveis. Serão realizados: (a) Testes Unitários, focados nas regras de negócio e em métodos 
+isolados do sistema; (b) Testes de Integração, para verificar a comunicação correta entre as 
+camadas (ex: controller e repositório) e a integração com o banco de dados; (c) Testes de 
+Aceitação (ou Funcionais), simulando o comportamento do usuário final na interface web; e, 
+crucialmente, (d) Testes de Robustez da Automação, onde o robô será executado 
+repetidamente contra versões controladas dos sites (ou ambientes de teste) para verificar sua 
+resiliência a mudanças no layout e a possíveis falhas de conexão, garantindo a confiabilidade 
+prometida ao usuário. 
+ 
+ 
+ 
+3 CONTRIBUIÇÃO DO TRABALHO (Qual o diferencial?) 
+A principal contribuição do projeto reside na proposição de uma solução tecnológica que 
+automatiza por completo um microprocesso do cotidiano, transferindo a carga operacional do 
+ser humano para o domínio do software. Contudo, o diferencial do trabalho vai muito além da 
+simples automação, aprofundando-se em contribuições de natureza prática, técnica e 
+acadêmica que o posicionam como um projeto relevante para a área de Análise e 
+Desenvolvimento de Sistemas e para a sociedade como um todo. 
+ 
+
+ 
+ 
+Do ponto de vista prático e social, o sistema oferece um ganho tangível de qualidade de vida 
+que merece ser analisado em suas múltiplas dimensões. Em primeiro lugar, a dimensão 
+temporal: a atividade manual de acessar portais, realizar logins e localizar boletos, embora 
+pareça simples, é cumulativa. Considerando que um usuário típico pode ter entre três a cinco 
+contas recorrentes, e que cada operação leva em média de dois a cinco minutos dependendo 
+da complexidade do site, o tempo mensal despendido pode variar de dez a vinte e cinco 
+minutos. Quando projetado para um período de um ano, esse número pode alcançar entre 
+duas e cinco horas de trabalho braçal e repetitivo. O AutoDownload elimina completamente 
+essa necessidade, devolvendo ao usuário um tempo precioso que pode ser redirecionado para 
+atividades mais produtivas ou de lazer, contribuindo indiretamente para seu bem-estar e 
+qualidade de vida. Em segundo lugar, a dimensão financeira: a dependência exclusiva da 
+memória humana para a execução de tarefas críticas é intrinsecamente frágil. Estudos de 
+psicologia cognitiva demonstram que a memória de trabalho humana é limitada e suscetível a 
+falhas, especialmente quando sobrecarregada por múltiplas responsabilidades cotidianas. Um 
+simples esquecimento no acesso a um portal pode resultar no não pagamento de uma conta 
+dentro do prazo, gerando multas e juros que comprometem o orçamento familiar e, em casos 
+extremos, podem levar à suspensão de serviços essenciais como energia elétrica, água ou 
+internet. O AutoDownload atua como uma camada de proteção contra essas falhas, garantindo 
+que a tarefa seja executada religiosamente dentro do período estipulado, independentemente 
+da atenção ou disponibilidade do usuário naquele momento específico. Em terceiro lugar, a 
+dimensão organizacional: os boletos baixados manualmente tendem a se acumular de forma 
+desordenada em pastas de download, diretórios temporários ou espalhados por diferentes 
+dispositivos, dificultando a localização futura para comprovação de pagamento, conferência de 
+valores ou planejamento financeiro. O AutoDownload resolve esse problema ao centralizar 
+todos os boletos obtidos em um repositório único, acessível através do painel de histórico, que 
+registra não apenas o documento em si, mas também metadados valiosos como data de 
+obtenção, empresa emissora, valor e status da operação. Essa centralização transforma um 
+conjunto disperso de arquivos em uma base de conhecimento financeiro pessoal, permitindo ao 
+usuário consultar, de forma unificada e cronológica, todo o seu histórico de cobranças, 
+facilitando a conferência e o arquivamento digital permanente. A decisão de projeto de limitar a 
+três contas por usuário, longe de ser uma deficiência, é um diferencial estratégico de foco. Ela 
+reconhece realisticamente o escopo de um Trabalho de Conclusão de Curso e direciona a 
+solução para o usuário doméstico típico, evitando a complexidade exponencial e os requisitos 
+não funcionais de um sistema corporativo de alto volume, o que torna a proposta mais factível, 
+ 
+
+ 
+realista e com maiores chances de sucesso na implementação, sem perder seu valor de uso 
+para o público-alvo principal. 
+ 
+No âmbito técnico, o projeto se destaca pela complexidade da integração entre diferentes 
+camadas e tecnologias, representando um desafio não trivial para um desenvolvedor em 
+formação. Não se trata de um simples sistema CRUD (Create, Read, Update, Delete) com 
+operações padronizadas sobre um banco de dados. O verdadeiro desafio técnico está na 
+criação de um "robô de software" resiliente, capaz de interagir com sistemas de terceiros — os 
+portais web das concessionárias de energia, água, operadoras de telefonia e internet — sobre 
+os quais não temos qualquer controle ou ingerência. Esses portais são sistemas heterogêneos, 
+construídos com tecnologias variadas, que podem apresentar estruturas de página 
+completamente distintas entre si. Alguns utilizam HTML tradicional com submissão de 
+formulários síncrona, enquanto outros são modernas Single Page Applications (SPAs) 
+construídas com frameworks como React, Angular ou Vue.js, que carregam conteúdo 
+dinamicamente via JavaScript e requisições assíncronas. Para piorar, esses portais estão em 
+constante evolução: podem alterar seu código HTML, modificar identificadores (IDs) e classes 
+CSS, reorganizar a estrutura de navegação, ou até mesmo implementar novos desafios de 
+segurança como CAPTCHAs ou autenticação de dois fatores. Enfrentar esse ambiente hostil e 
+mutável exigirá a aplicação de padrões de projeto avançados, como o Strategy Pattern, para 
+criar uma arquitetura que isole completamente a lógica de automação de cada operadora em 
+módulos independentes e intercambiáveis. Dessa forma, uma alteração no site da operadora A 
+impacta apenas o módulo responsável por aquela automação, sem comprometer o 
+funcionamento das demais operadoras. Essa abordagem demonstra maturidade na engenharia 
+de software, indo além da mentalidade de "código que funciona" e buscando uma solução com 
+preocupações genuínas de manutenção, extensibilidade e evolução tecnológica. Além disso, o 
+projeto exigirá a implementação de mecanismos robustos de tolerância a falhas e recuperação: 
+o robô precisará ser capaz de detectar quando uma página não carregou corretamente, quando 
+um elemento esperado não está presente, ou quando ocorreu uma falha de rede, e tomar 
+decisões inteligentes como aguardar um tempo, tentar novamente ou abortar a operação 
+registrando o erro apropriadamente. A escolha de ferramentas modernas como o Playwright, 
+em detrimento de alternativas mais antigas como o Selenium, traz desafios adicionais de 
+aprendizado e adaptação, mas também oferece vantagens significativas em termos de 
+velocidade, confiabilidade e capacidade de espera inteligente por elementos dinâmicos. O 
+tratamento seguro das credenciais dos usuários nos portais externos adiciona outra camada de 
+complexidade técnica, exigindo a implementação de criptografia simétrica robusta para 
+ 
+
+ 
+armazenamento no banco de dados, garantindo que mesmo em caso de invasão ao sistema, 
+as senhas dos usuários nos sites das operadoras permaneçam protegidas. 
+ 
+Academicamente, o trabalho é de extrema relevância por aplicar e consolidar conhecimentos 
+provenientes de diversas disciplinas fundamentais do curso de Análise e Desenvolvimento de 
+Sistemas em um projeto coeso, integrado e desafiador, funcionando como uma síntese da 
+formação recebida ao longo do curso. A construção do AutoDownload perpassa 
+obrigatoriamente por: 
+ 
+Engenharia de Software: desde a etapa inicial de elicitação de requisitos com potenciais 
+usuários, passando pela modelagem rigorosa com diagramas UML (Casos de Uso, Classes, 
+Sequência), até a escolha fundamentada do ciclo de vida iterativo e incremental como 
+metodologia de desenvolvimento e a aplicação consciente de padrões de projeto para resolver 
+problemas recorrentes de arquitetura. 
+ 
+Banco de Dados: na modelagem relacional do domínio do problema, com a criação de um 
+diagrama entidade-relacionamento normalizado até a Terceira Forma Normal (3NF), na 
+implementação física das tabelas em PostgreSQL, na construção de consultas SQL otimizadas 
+para recuperação eficiente dos dados, e no projeto de transações que garantam a consistência 
+dos registros de histórico. 
+ 
+Desenvolvimento Web: na criação de uma aplicação completa e segura utilizando o 
+ecossistema ASP.NET Core, seja na construção de uma API RESTful para o back-end ou no 
+desenvolvimento de interfaces interativas com Blazor ou Razor Pages para o front-end, 
+abordando conceitos como roteamento, injeção de dependência, middlewares e validação de 
+dados. 
+ 
+Segurança da Informação: no tratamento criterioso e armazenamento criptografado de 
+credenciais de terceiros, um dos pontos mais sensíveis do sistema e que exige profundo 
+respeito às boas práticas de segurança e à conformidade com a Lei Geral de Proteção de 
+Dados (LGPD), incluindo a implementação de hashing seguro para senhas de acesso ao 
+sistema e criptografia simétrica para as senhas dos portais externos. 
+ 
+ 
+
+ 
+Automação e Testes de Software: no uso de ferramentas de ponta como o Playwright para 
+simular fielmente a interação humana com os navegadores, incluindo cliques, preenchimento 
+de formulários e navegação entre páginas, e na criação de uma suíte abrangente de testes 
+automatizados (unitários, integração e aceitação) para garantir a qualidade, a confiabilidade e a 
+resiliência do robô diante de cenários adversos. 
+ 
+Por fim, o projeto oferece uma contribuição metodológica importante ao discutir e tentar 
+endereçar a questão da padronização do fluxo de automação em portais heterogêneos. Não 
+existe, atualmente, um padrão universal para portais de cobrança de contas de consumo. Cada 
+empresa desenvolve sua interface e seu fluxo de acordo com suas próprias necessidades e 
+critérios. O trabalho buscará, dentro do possível e considerando as limitações de tempo e 
+escopo, criar uma metodologia de "raspagem de dados" (web scraping) e automação que 
+possa ser documentada de forma clara e, futuramente, adaptada e estendida para incorporar 
+novos portais com o menor esforço possível. Essa documentação incluirá a identificação de 
+padrões comuns entre os sites, a categorização dos diferentes tipos de fluxo de autenticação e 
+navegação, e a proposição de uma arquitetura de software flexível capaz de acomodar essa 
+diversidade. Dessa forma, o AutoDownload não se configura apenas como um sistema 
+funcional, mas como um estudo de caso concreto sobre como a engenharia de software pode 
+atacar problemas complexos e multifacetados do mundo real, combinando múltiplas disciplinas 
+e conhecimentos para entregar uma solução que é, ao mesmo tempo, imediatamente útil para 
+a sociedade e extremamente rica em aprendizado técnico e acadêmico para o pesquisador, 
+para o orientador e para a comunidade acadêmica como um todo, servindo como referência 
+para trabalhos futuros que enfrentam desafios semelhantes de integração e automação. 
+ 
+ 
+ 
+
+
+

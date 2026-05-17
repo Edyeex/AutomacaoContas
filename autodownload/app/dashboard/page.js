@@ -1,0 +1,129 @@
+"use client";
+import Link from "next/link";
+import { contas, boletos, historico } from "../lib/mockData";
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString("pt-BR");
+}
+
+function formatDateTime(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatCurrency(val) {
+  return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+export default function DashboardPage() {
+  const totalBoletos = boletos.length;
+  const totalContas = contas.length;
+  const execSucesso = historico.filter((h) => h.status === "sucesso").length;
+  const execFalha = historico.filter((h) => h.status === "falha").length;
+
+  const recentBoletos = boletos.slice(0, 3);
+  const recentHistory = historico.slice(0, 5);
+
+  return (
+    <>
+      <div className="page-header">
+        <h1>Visão geral</h1>
+        <div className="page-header-actions">
+          <Link href="/dashboard/contas" className="btn btn-secondary btn-sm">
+            Gerenciar contas
+          </Link>
+        </div>
+      </div>
+
+      <div className="page-body">
+        <div className="stats-row">
+          <div className="stat-item">
+            <div className="stat-label">Contas cadastradas</div>
+            <div className="stat-value">{totalContas}</div>
+            <div className="stat-sub">de 3 permitidas</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-label">Boletos baixados</div>
+            <div className="stat-value">{totalBoletos}</div>
+            <div className="stat-sub">total acumulado</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-label">Execuções com sucesso</div>
+            <div className="stat-value">{execSucesso}</div>
+            <div className="stat-sub">{execFalha} falha(s)</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-label">Próxima execução</div>
+            <div className="stat-value" style={{ fontSize: 18 }}>03/05/2025</div>
+            <div className="stat-sub">agendamento automático</div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          {/* Recent Boletos */}
+          <div className="card">
+            <div className="card-header">
+              <h3>Boletos recentes</h3>
+              <Link href="/dashboard/boletos" className="btn-link">Ver todos</Link>
+            </div>
+            <div>
+              {recentBoletos.map((b) => (
+                <div key={b.id} className="boleto-item">
+                  <div className="boleto-info">
+                    <div className="boleto-icon">{b.icon}</div>
+                    <div className="boleto-details">
+                      <h4>{b.operadora}</h4>
+                      <span>{b.referencia} · Vence {formatDate(b.vencimento)}</span>
+                    </div>
+                  </div>
+                  <div className="boleto-meta">
+                    <span className="boleto-amount">{formatCurrency(b.valor)}</span>
+                    <button className="btn btn-secondary btn-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent History */}
+          <div className="card">
+            <div className="card-header">
+              <h3>Atividade recente</h3>
+              <Link href="/dashboard/historico" className="btn-link">Ver tudo</Link>
+            </div>
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Operadora</th>
+                    <th>Status</th>
+                    <th>Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentHistory.map((h) => (
+                    <tr key={h.id}>
+                      <td>{h.operadora}</td>
+                      <td>
+                        <span className={`status status-${h.status === "sucesso" ? "success" : h.status === "falha" ? "error" : "warning"}`}>
+                          {h.status === "sucesso" ? "Sucesso" : h.status === "falha" ? "Falha" : "Indisponível"}
+                        </span>
+                      </td>
+                      <td style={{ color: "var(--text-muted)", fontSize: 12 }}>{formatDateTime(h.dataExecucao)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
