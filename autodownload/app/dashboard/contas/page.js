@@ -1,20 +1,34 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { contas, operadoras } from "../../lib/mockData";
+import { apiRequest } from "../../lib/apiClient";
+import { useApiResource } from "../../lib/useApiResource";
+import { publishDashboardCountsChanged } from "../../lib/dashboardState";
+import { fetchUnreadCount, publishUnreadCount } from "../../lib/notificationState";
 
 function formatDate(d) {
-  return new Date(d).toLocaleDateString("pt-BR");
+  return d ? new Date(d).toLocaleDateString("pt-BR") : "-";
 }
 
 export default function ContasPage() {
+  const { data: apiContas, loading, error, usingFallback, reload } = useApiResource("/accounts", contas);
+  const { data: apiOperadoras } = useApiResource("/operators", operadoras);
   const [list, setList] = useState(contas);
-  const [modal, setModal] = useState(null); // null | "add" | "edit"
+  const [modal, setModal] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [form, setForm] = useState({ operadoraId: "", login: "", senha: "", unidade: "" });
+  const [formError, setFormError] = useState("");
+  const [pageMessage, setPageMessage] = useState("");
+  const accountCount = list.length;
+
+  useEffect(() => {
+    setList(apiContas || []);
+  }, [apiContas]);
 
   function openAdd() {
-    if (list.length >= 3) return;
+    if (accountCount >= 3) return;
     setForm({ operadoraId: "", login: "", senha: "", unidade: "" });
+    setFormError("");
     setEditItem(null);
     setModal("add");
   }
@@ -26,6 +40,7 @@ export default function ContasPage() {
       senha: "",
       unidade: conta.unidadeConsumidora,
     });
+    setFormError("");
     setEditItem(conta);
     setModal("edit");
   }
@@ -33,17 +48,52 @@ export default function ContasPage() {
   function closeModal() {
     setModal(null);
     setEditItem(null);
+    setFormError("");
   }
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleSave(e) {
+  async function handleSave(e) {
     e.preventDefault();
-    const op = operadoras.find((o) => o.id === Number(form.operadoraId));
-    if (!op || !form.login || !form.unidade) return;
+    setFormError("");
+    const op = apiOperadoras.find((o) => String(o.id) === form.operadoraId);
+    if (!op || !form.login || !form.unidade || (modal === "add" && !form.senha)) {
+      setFormError("Preencha os campos obrigatórios.");
+      return;
+    }
 
+    if (usingFallback) {
+      saveLocally(op);
+      closeModal();
+      return;
+    }
+
+    try {
+      const body = {
+        operadoraId: op.id,
+        loginPortal: form.login,
+        senhaPortal: form.senha || null,
+        unidadeConsumidora: form.unidade,
+      };
+
+      if (modal === "add") {
+        await apiRequest("/accounts", { method: "POST", body });
+      } else {
+        await apiRequest(`/accounts/${editItem.id}`, { method: "PUT", body });
+      }
+
+      await reload();
+      publishDashboardCountsChanged();
+      await refreshUnreadCount();
+      closeModal();
+    } catch (err) {
+      setFormError(err.message || "Não foi possível salvar a conta.");
+    }
+  }
+
+  function saveLocally(op) {
     if (modal === "add") {
       const newConta = {
         id: Date.now(),
@@ -54,8 +104,8 @@ export default function ContasPage() {
         loginPortal: form.login,
         unidadeConsumidora: form.unidade,
         status: "ativa",
-        ultimaExecucao: "—",
-        proximaExecucao: "—",
+        ultimaExecucao: null,
+        proximaExecucao: null,
       };
       setList((prev) => [...prev, newConta]);
     } else {
@@ -67,11 +117,48 @@ export default function ContasPage() {
         )
       );
     }
-    closeModal();
   }
 
-  function handleRemove(id) {
-    setList((prev) => prev.filter((c) => c.id !== id));
+  async function handleRemove(id) {
+    setPageMessage("");
+    if (usingFallback) {
+      setList((prev) => prev.filter((c) => c.id !== id));
+      return;
+    }
+
+    try {
+      await apiRequest(`/accounts/${id}`, { method: "DELETE" });
+      await reload();
+      publishDashboardCountsChanged();
+      await refreshUnreadCount();
+    } catch (err) {
+      setPageMessage(err.message || "Não foi possível remover a conta.");
+    }
+  }
+
+  async function handleRun(id) {
+    setPageMessage("");
+    if (usingFallback) {
+      setPageMessage("API indisponível; execução manual disponível quando o backend estiver rodando.");
+      return;
+    }
+
+    try {
+      await apiRequest(`/accounts/${id}/run`, { method: "POST" });
+      await reload();
+      publishDashboardCountsChanged();
+      await refreshUnreadCount();
+      setPageMessage("Automação executada.");
+    } catch (err) {
+      setPageMessage(err.message || "Não foi possível executar a automação.");
+    }
+  }
+
+  async function refreshUnreadCount() {
+    try {
+      publishUnreadCount(await fetchUnreadCount());
+    } catch {
+    }
   }
 
   return (
@@ -80,15 +167,21 @@ export default function ContasPage() {
         <h1>Contas cadastradas</h1>
         <div className="page-header-actions">
           <span style={{ fontSize: 13, color: "var(--text-muted)", marginRight: 8 }}>
-            {list.length}/3 contas
+            {accountCount} {accountCount === 1 ? "conta cadastrada" : "contas cadastradas"}
           </span>
-          <button className="btn btn-primary btn-sm" onClick={openAdd} disabled={list.length >= 3}>
+          <button className="btn btn-primary btn-sm" onClick={openAdd} disabled={accountCount >= 3}>
             Adicionar conta
           </button>
         </div>
       </div>
 
       <div className="page-body">
+        {(loading || error || pageMessage) && (
+          <p style={{ fontSize: 13, color: error || pageMessage ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
+            {loading ? "Carregando contas..." : pageMessage || "API indisponível; exibindo dados do protótipo."}
+          </p>
+        )}
+
         {list.length === 0 ? (
           <div className="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -113,6 +206,9 @@ export default function ContasPage() {
                     </div>
                   </div>
                   <div className="account-card-actions">
+                    <button className="btn btn-secondary btn-sm" onClick={() => handleRun(conta.id)}>
+                      Executar
+                    </button>
                     <button className="btn btn-secondary btn-sm" onClick={() => openEdit(conta)}>
                       Editar
                     </button>
@@ -137,9 +233,7 @@ export default function ContasPage() {
                 </div>
                 <div className="account-detail">
                   <span className="account-detail-label">Última execução</span>
-                  <span className="account-detail-value">
-                    {conta.ultimaExecucao === "—" ? "—" : formatDate(conta.ultimaExecucao)}
-                  </span>
+                  <span className="account-detail-value">{formatDate(conta.ultimaExecucao)}</span>
                 </div>
               </div>
             ))}
@@ -147,7 +241,6 @@ export default function ContasPage() {
         )}
       </div>
 
-      {/* Modal */}
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -162,6 +255,9 @@ export default function ContasPage() {
             </div>
             <form onSubmit={handleSave}>
               <div className="modal-body">
+                {formError && (
+                  <p style={{ color: "var(--danger)", fontSize: 13, marginBottom: 12 }}>{formError}</p>
+                )}
                 <div className="form-group">
                   <label>Operadora</label>
                   <select
@@ -170,7 +266,7 @@ export default function ContasPage() {
                     onChange={(e) => update("operadoraId", e.target.value)}
                   >
                     <option value="">Selecione...</option>
-                    {operadoras.map((op) => (
+                    {apiOperadoras.map((op) => (
                       <option key={op.id} value={op.id}>
                         {op.icon} {op.name} ({op.type})
                       </option>

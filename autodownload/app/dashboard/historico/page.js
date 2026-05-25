@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { historico } from "../../lib/mockData";
+import { useApiResource } from "../../lib/useApiResource";
 
 function formatDateTime(d) {
   const dt = new Date(d);
@@ -20,9 +21,10 @@ function statusClass(s) {
 }
 
 export default function HistoricoPage() {
+  const { data, loading, error, usingFallback } = useApiResource("/history", historico);
   const [filter, setFilter] = useState("todos");
 
-  const filtered = historico.filter((h) => {
+  const filtered = data.filter((h) => {
     if (filter === "todos") return true;
     return h.status === filter;
   });
@@ -34,6 +36,12 @@ export default function HistoricoPage() {
       </div>
 
       <div className="page-body">
+        {(loading || error) && (
+          <p style={{ fontSize: 13, color: usingFallback ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
+            {loading ? "Carregando histórico..." : "API indisponível; exibindo dados do protótipo."}
+          </p>
+        )}
+
         <div className="tabs">
           {["todos", "sucesso", "falha", "indisponivel"].map((f) => (
             <button
@@ -88,7 +96,7 @@ export default function HistoricoPage() {
                             </svg>
                           </button>
                         ) : (
-                          <span style={{ color: "var(--text-muted)", fontSize: 12 }}>—</span>
+                          <span style={{ color: "var(--text-muted)", fontSize: 12 }}>-</span>
                         )}
                       </td>
                     </tr>

@@ -1,16 +1,25 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "../lib/apiClient";
 
 export default function RecuperarSenhaPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (email) {
-      setSent(true);
+      try {
+        await apiRequest("/auth/recover-password", {
+          method: "POST",
+          auth: false,
+          body: { email },
+        });
+      } finally {
+        setSent(true);
+      }
     }
   }
 

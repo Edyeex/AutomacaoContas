@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest, saveSession } from "../lib/apiClient";
 
 export default function CadastroPage() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function CadastroPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     if (!form.nome || !form.email || !form.senha || !form.confirmar) {
@@ -26,7 +27,17 @@ export default function CadastroPage() {
       setError("A senha deve ter no mínimo 6 caracteres.");
       return;
     }
-    router.push("/dashboard");
+    try {
+      const auth = await apiRequest("/auth/register", {
+        method: "POST",
+        auth: false,
+        body: { name: form.nome, email: form.email, password: form.senha },
+      });
+      saveSession(auth);
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err.message || "Não foi possível criar a conta.");
+    }
   }
 
   return (

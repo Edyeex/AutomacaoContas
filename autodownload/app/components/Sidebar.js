@@ -1,7 +1,18 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { currentUser } from "../lib/mockData";
+import { clearSession } from "../lib/apiClient";
+import {
+  DASHBOARD_COUNTS_CHANGED_EVENT,
+  fallbackDashboardCounts,
+  fetchDashboardCounts,
+} from "../lib/dashboardState";
+import {
+  fallbackUnreadCount,
+  fetchUnreadCount,
+  NOTIFICATIONS_CHANGED_EVENT,
+} from "../lib/notificationState";
 
 const navItems = [
   {
@@ -28,7 +39,7 @@ const navItems = [
             <circle cx="12" cy="7" r="4" />
           </svg>
         ),
-        count: "3",
+        countKey: "totalContas",
       },
       {
         href: "/dashboard/boletos",
@@ -42,7 +53,7 @@ const navItems = [
             <polyline points="10 9 9 9 8 9" />
           </svg>
         ),
-        count: "6",
+        countKey: "totalBoletos",
       },
     ],
   },
@@ -68,7 +79,7 @@ const navItems = [
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
         ),
-        count: "2",
+        notificationCount: true,
       },
       {
         href: "/dashboard/configuracoes",
@@ -87,10 +98,49 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(fallbackUnreadCount());
+  const [dashboardCounts, setDashboardCounts] = useState(fallbackDashboardCounts());
+
+  useEffect(() => {
+    async function loadUnreadCount() {
+      try {
+        setUnreadCount(await fetchUnreadCount());
+      } catch {
+        setUnreadCount(fallbackUnreadCount());
+      }
+    }
+
+    function handleNotificationsChanged(event) {
+      setUnreadCount(event.detail?.unreadCount ?? 0);
+    }
+
+    loadUnreadCount();
+    window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, handleNotificationsChanged);
+    return () => window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, handleNotificationsChanged);
+  }, []);
+
+  useEffect(() => {
+    async function loadDashboardCounts() {
+      try {
+        setDashboardCounts(await fetchDashboardCounts());
+      } catch {
+        setDashboardCounts(fallbackDashboardCounts());
+      }
+    }
+
+    loadDashboardCounts();
+    window.addEventListener(DASHBOARD_COUNTS_CHANGED_EVENT, loadDashboardCounts);
+    return () => window.removeEventListener(DASHBOARD_COUNTS_CHANGED_EVENT, loadDashboardCounts);
+  }, []);
 
   function isActive(href) {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
+  }
+
+  function handleLogout() {
+    clearSession();
+    router.push("/");
   }
 
   return (
@@ -99,30 +149,38 @@ export default function Sidebar() {
         {navItems.map((section) => (
           <div key={section.section} className="nav-section">
             <div className="nav-section-title">{section.section}</div>
-            {section.items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`nav-item${isActive(item.href) ? " active" : ""}`}
-              >
-                {item.icon}
-                {item.label}
-                {item.count && <span className="count">{item.count}</span>}
-              </Link>
-            ))}
+            {section.items.map((item) => {
+              const count = item.notificationCount
+                ? unreadCount
+                : item.countKey
+                  ? dashboardCounts[item.countKey]
+                  : item.count;
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`nav-item${isActive(item.href) ? " active" : ""}`}
+                >
+                  {item.icon}
+                  {item.label}
+                  {Number(count) > 0 && <span className="count">{count}</span>}
+                </Link>
+              );
+            })}
           </div>
         ))}
       </nav>
 
       <div className="sidebar-footer">
-        <Link href="/dashboard/configuracoes" className="nav-item">
+        <button type="button" className="nav-item" onClick={handleLogout}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
           Sair
-        </Link>
+        </button>
       </div>
     </aside>
   );

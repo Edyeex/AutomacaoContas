@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\AutoDownload.Domain\AutoDownload.Domain.csproj" />
+  </ItemGroup>
+</Project>

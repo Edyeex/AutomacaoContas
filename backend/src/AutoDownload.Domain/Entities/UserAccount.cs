@@ -1,0 +1,150 @@
+using AutoDownload.Domain.Common;
+using AutoDownload.Domain.Enums;
+
+namespace AutoDownload.Domain.Entities;
+
+public sealed class UserAccount : Entity
+{
+    public const int MaxActiveAccountsPerUser = 3;
+
+    public UserAccount(
+        Guid id,
+        Guid userId,
+        Guid operatorId,
+        string portalLogin,
+        string encryptedPortalPassword,
+        string customerIdentifier,
+        AccountStatus status,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt,
+        DateTimeOffset? lastRunAt,
+        DateTimeOffset? nextRunAt)
+        : base(id)
+    {
+        UserId = EnsureGuid(userId, nameof(userId));
+        OperatorId = EnsureGuid(operatorId, nameof(operatorId));
+        PortalLogin = EnsurePortalLogin(portalLogin);
+        EncryptedPortalPassword = EnsureEncryptedSecret(encryptedPortalPassword);
+        CustomerIdentifier = EnsureCustomerIdentifier(customerIdentifier);
+        Status = status;
+        CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
+        LastRunAt = lastRunAt;
+        NextRunAt = nextRunAt;
+    }
+
+    public Guid UserId { get; }
+
+    public Guid OperatorId { get; private set; }
+
+    public string PortalLogin { get; private set; }
+
+    public string EncryptedPortalPassword { get; private set; }
+
+    public string CustomerIdentifier { get; private set; }
+
+    public AccountStatus Status { get; private set; }
+
+    public DateTimeOffset CreatedAt { get; }
+
+    public DateTimeOffset UpdatedAt { get; private set; }
+
+    public DateTimeOffset? LastRunAt { get; private set; }
+
+    public DateTimeOffset? NextRunAt { get; private set; }
+
+    public static UserAccount Create(
+        Guid userId,
+        Guid operatorId,
+        string portalLogin,
+        string encryptedPortalPassword,
+        string customerIdentifier,
+        DateTimeOffset now,
+        DateTimeOffset nextRunAt)
+        => new(
+            Guid.NewGuid(),
+            userId,
+            operatorId,
+            portalLogin,
+            encryptedPortalPassword,
+            customerIdentifier,
+            AccountStatus.Active,
+            now,
+            now,
+            null,
+            nextRunAt);
+
+    public void Update(
+        Guid operatorId,
+        string portalLogin,
+        string? encryptedPortalPassword,
+        string customerIdentifier,
+        DateTimeOffset now)
+    {
+        OperatorId = EnsureGuid(operatorId, nameof(operatorId));
+        PortalLogin = EnsurePortalLogin(portalLogin);
+        CustomerIdentifier = EnsureCustomerIdentifier(customerIdentifier);
+
+        if (!string.IsNullOrWhiteSpace(encryptedPortalPassword))
+        {
+            EncryptedPortalPassword = EnsureEncryptedSecret(encryptedPortalPassword);
+        }
+
+        UpdatedAt = now;
+    }
+
+    public void MarkAutomationRun(DateTimeOffset ranAt, DateTimeOffset nextRunAt)
+    {
+        LastRunAt = ranAt;
+        NextRunAt = nextRunAt;
+        UpdatedAt = ranAt;
+    }
+
+    public void Disable(DateTimeOffset now)
+    {
+        Status = AccountStatus.Inactive;
+        UpdatedAt = now;
+    }
+
+    private static Guid EnsureGuid(Guid value, string fieldName)
+    {
+        if (value == Guid.Empty)
+        {
+            throw new DomainException($"{fieldName} cannot be empty.");
+        }
+
+        return value;
+    }
+
+    private static string EnsurePortalLogin(string portalLogin)
+    {
+        var normalized = (portalLogin ?? string.Empty).Trim();
+        if (normalized.Length is < 2 or > 160)
+        {
+            throw new DomainException("Portal login must contain between 2 and 160 characters.");
+        }
+
+        return normalized;
+    }
+
+    private static string EnsureEncryptedSecret(string encryptedPortalPassword)
+    {
+        if (string.IsNullOrWhiteSpace(encryptedPortalPassword))
+        {
+            throw new DomainException("Encrypted portal password is required.");
+        }
+
+        return encryptedPortalPassword;
+    }
+
+    private static string EnsureCustomerIdentifier(string customerIdentifier)
+    {
+        var normalized = (customerIdentifier ?? string.Empty).Trim();
+        if (normalized.Length is < 2 or > 80)
+        {
+            throw new DomainException("Customer identifier must contain between 2 and 80 characters.");
+        }
+
+        return normalized;
+    }
+}

@@ -1,9 +1,21 @@
 "use client";
 import Link from "next/link";
 import { contas, boletos, historico } from "../lib/mockData";
+import { useApiResource } from "../lib/useApiResource";
+
+const fallbackDashboard = {
+  totalContas: contas.length,
+  limiteContas: 3,
+  totalBoletos: boletos.length,
+  execucoesSucesso: historico.filter((h) => h.status === "sucesso").length,
+  execucoesFalha: historico.filter((h) => h.status === "falha").length,
+  proximaExecucao: contas.map((c) => c.proximaExecucao).find((d) => d && d !== "-"),
+  boletosRecentes: boletos.slice(0, 3),
+  historicoRecente: historico.slice(0, 5),
+};
 
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString("pt-BR");
+  return dateStr ? new Date(dateStr).toLocaleDateString("pt-BR") : "-";
 }
 
 function formatDateTime(dateStr) {
@@ -12,17 +24,25 @@ function formatDateTime(dateStr) {
 }
 
 function formatCurrency(val) {
-  return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return Number(val || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function statusText(status) {
+  if (status === "sucesso") return "Sucesso";
+  if (status === "falha") return "Falha";
+  return "Indisponível";
+}
+
+function statusClass(status) {
+  if (status === "sucesso") return "status-success";
+  if (status === "falha") return "status-error";
+  return "status-warning";
 }
 
 export default function DashboardPage() {
-  const totalBoletos = boletos.length;
-  const totalContas = contas.length;
-  const execSucesso = historico.filter((h) => h.status === "sucesso").length;
-  const execFalha = historico.filter((h) => h.status === "falha").length;
-
-  const recentBoletos = boletos.slice(0, 3);
-  const recentHistory = historico.slice(0, 5);
+  const { data: dashboard, loading, error, usingFallback } = useApiResource("/dashboard", fallbackDashboard);
+  const recentBoletos = dashboard.boletosRecentes || [];
+  const recentHistory = dashboard.historicoRecente || [];
 
   return (
     <>
@@ -36,31 +56,36 @@ export default function DashboardPage() {
       </div>
 
       <div className="page-body">
+        {(loading || error) && (
+          <p style={{ fontSize: 13, color: usingFallback ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
+            {loading ? "Carregando dados..." : "API indisponível; exibindo dados do protótipo."}
+          </p>
+        )}
+
         <div className="stats-row">
           <div className="stat-item">
             <div className="stat-label">Contas cadastradas</div>
-            <div className="stat-value">{totalContas}</div>
-            <div className="stat-sub">de 3 permitidas</div>
+            <div className="stat-value">{dashboard.totalContas}</div>
+            <div className="stat-sub">de {dashboard.limiteContas} permitidas</div>
           </div>
           <div className="stat-item">
             <div className="stat-label">Boletos baixados</div>
-            <div className="stat-value">{totalBoletos}</div>
+            <div className="stat-value">{dashboard.totalBoletos}</div>
             <div className="stat-sub">total acumulado</div>
           </div>
           <div className="stat-item">
             <div className="stat-label">Execuções com sucesso</div>
-            <div className="stat-value">{execSucesso}</div>
-            <div className="stat-sub">{execFalha} falha(s)</div>
+            <div className="stat-value">{dashboard.execucoesSucesso}</div>
+            <div className="stat-sub">{dashboard.execucoesFalha} falha(s)</div>
           </div>
           <div className="stat-item">
             <div className="stat-label">Próxima execução</div>
-            <div className="stat-value" style={{ fontSize: 18 }}>03/05/2025</div>
+            <div className="stat-value" style={{ fontSize: 18 }}>{formatDate(dashboard.proximaExecucao)}</div>
             <div className="stat-sub">agendamento automático</div>
           </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          {/* Recent Boletos */}
           <div className="card">
             <div className="card-header">
               <h3>Boletos recentes</h3>
@@ -73,7 +98,7 @@ export default function DashboardPage() {
                     <div className="boleto-icon">{b.icon}</div>
                     <div className="boleto-details">
                       <h4>{b.operadora}</h4>
-                      <span>{b.referencia} · Vence {formatDate(b.vencimento)}</span>
+                      <span>{b.referencia} - Vence {formatDate(b.vencimento)}</span>
                     </div>
                   </div>
                   <div className="boleto-meta">
@@ -91,7 +116,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Recent History */}
           <div className="card">
             <div className="card-header">
               <h3>Atividade recente</h3>
@@ -111,8 +135,8 @@ export default function DashboardPage() {
                     <tr key={h.id}>
                       <td>{h.operadora}</td>
                       <td>
-                        <span className={`status status-${h.status === "sucesso" ? "success" : h.status === "falha" ? "error" : "warning"}`}>
-                          {h.status === "sucesso" ? "Sucesso" : h.status === "falha" ? "Falha" : "Indisponível"}
+                        <span className={`status ${statusClass(h.status)}`}>
+                          {statusText(h.status)}
                         </span>
                       </td>
                       <td style={{ color: "var(--text-muted)", fontSize: 12 }}>{formatDateTime(h.dataExecucao)}</td>

@@ -7,8 +7,16 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt-BR">
-      <body>{children}</body>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('autodownload.theme');document.documentElement.dataset.theme=t==='dark'?'dark':'light'}catch(e){}",
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AutoDownload.Application\AutoDownload.Application.csproj" />
+    <ProjectReference Include="..\..\src\AutoDownload.Domain\AutoDownload.Domain.csproj" />
+    <ProjectReference Include="..\..\src\AutoDownload.Infrastructure\AutoDownload.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

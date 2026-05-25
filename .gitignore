@@ -1,0 +1,13 @@
+# .NET
+**/bin/
+**/obj/
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+.external/
+
+# OS
+.DS_Store
+Thumbs.db

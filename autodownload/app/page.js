@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest, saveSession } from "./lib/apiClient";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -8,15 +9,25 @@ export default function LoginPage() {
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     if (!email || !senha) {
       setError("Preencha todos os campos.");
       return;
     }
-    // Mock login
-    router.push("/dashboard");
+
+    try {
+      const auth = await apiRequest("/auth/login", {
+        method: "POST",
+        auth: false,
+        body: { email, password: senha },
+      });
+      saveSession(auth);
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err.message || "Não foi possível entrar.");
+    }
   }
 
   return (

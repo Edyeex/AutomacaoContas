@@ -1,6 +1,15 @@
 "use client";
 import { useState } from "react";
 import { boletos } from "../../lib/mockData";
+import { useApiResource } from "../../lib/useApiResource";
+import { apiDownload } from "../../lib/apiClient";
+
+function normalize(text) {
+  return String(text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
 
 function formatDate(d) {
   return new Date(d).toLocaleDateString("pt-BR");
@@ -12,18 +21,35 @@ function formatDateTime(d) {
 }
 
 function formatCurrency(val) {
-  return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return Number(val || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 export default function BoletosPage() {
+  const { data, loading, error, usingFallback } = useApiResource("/bills", boletos);
   const [filter, setFilter] = useState("todos");
   const [search, setSearch] = useState("");
+  const [pageMessage, setPageMessage] = useState("");
 
-  const filtered = boletos.filter((b) => {
-    if (filter !== "todos" && b.tipo.toLowerCase() !== filter) return false;
-    if (search && !b.operadora.toLowerCase().includes(search.toLowerCase()) && !b.referencia.toLowerCase().includes(search.toLowerCase())) return false;
+  const filtered = data.filter((b) => {
+    if (filter !== "todos" && normalize(b.tipo) !== filter) return false;
+    if (search && !normalize(b.operadora).includes(normalize(search)) && !normalize(b.referencia).includes(normalize(search))) return false;
     return true;
   });
+
+  async function downloadBill(boleto) {
+    setPageMessage("");
+
+    if (usingFallback) {
+      setPageMessage("Download disponível quando a API estiver rodando.");
+      return;
+    }
+
+    try {
+      await apiDownload(`/bills/${boleto.id}/download`, boleto.arquivo);
+    } catch (err) {
+      setPageMessage(err.message || "Não foi possível baixar o boleto.");
+    }
+  }
 
   return (
     <>
@@ -32,6 +58,12 @@ export default function BoletosPage() {
       </div>
 
       <div className="page-body">
+        {(loading || error || pageMessage) && (
+          <p style={{ fontSize: 13, color: usingFallback ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
+            {loading ? "Carregando boletos..." : pageMessage || "API indisponível; exibindo dados do protótipo."}
+          </p>
+        )}
+
         <div className="filter-bar">
           <input
             className="form-input"
@@ -47,7 +79,7 @@ export default function BoletosPage() {
           >
             <option value="todos">Todos os tipos</option>
             <option value="energia">Energia</option>
-            <option value="água">Água</option>
+            <option value="agua">Água</option>
             <option value="internet">Internet</option>
           </select>
         </div>
@@ -87,7 +119,7 @@ export default function BoletosPage() {
                         {formatDateTime(b.baixadoEm)}
                       </td>
                       <td style={{ textAlign: "right" }}>
-                        <button className="btn btn-secondary btn-sm">
+                        <button className="btn btn-secondary btn-sm" onClick={() => downloadBill(b)}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                             <polyline points="7 10 12 15 17 10" />
