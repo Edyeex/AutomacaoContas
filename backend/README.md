@@ -8,7 +8,7 @@ Backend .NET 10 para o AutoDownload, conectado ao protótipo Next.js por API RES
 - `AutoDownload.Application`: casos de uso, contratos HTTP, portas de persistência, segurança e automação.
 - `AutoDownload.Infrastructure`: EF Core, PostgreSQL, migrations, seed, Data Protection, hash de senha, JWT e estratégia demo de automação.
 - `AutoDownload.Api`: API ASP.NET Core Minimal APIs, CORS, autenticação JWT Bearer e endpoints REST.
-- `AutoDownload.Tests`: runner simples para checagens de domínio sem exigir banco rodando.
+- `AutoDownload.Tests`: suíte xUnit com testes unitários de domínio e dos serviços principais, sem exigir banco rodando.
 
 Padrões aplicados:
 
@@ -159,6 +159,16 @@ Configuração em `appsettings.json`:
   }
 }
 ```
+
+## Testes Unitários
+
+Execute na raiz do projeto:
+
+```powershell
+dotnet test .\backend\tests\AutoDownload.Tests\AutoDownload.Tests.csproj
+```
+
+A suíte cobre regras de domínio e os serviços de autenticação, contas, boletos e notificações usando repositórios em memória. Os testes de integração da API ficam em uma etapa separada.
 
 ## Migrations
 
