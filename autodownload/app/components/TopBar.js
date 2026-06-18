@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import AppBrand from "./AppBrand";
 import { currentUser } from "../lib/mockData";
 import { clearSession, getSession } from "../lib/apiClient";
 import { applyTheme, getStoredTheme, saveTheme } from "../lib/themeState";
@@ -162,12 +163,7 @@ export default function TopBar() {
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
-        <span>AutoDownload</span>
+        <AppBrand variant="topbar" />
       </div>
 
       <div className="topbar-search">
