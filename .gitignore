@@ -17,3 +17,4 @@ Thumbs.db
 !**/.env.example
 **/appsettings.Local.json
 **/appsettings.*.local.json
+**/App_Data/

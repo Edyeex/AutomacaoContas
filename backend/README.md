@@ -113,6 +113,20 @@ E-mail: eder.casagranda@email.com
 Senha: 123456
 ```
 
+## Automação Demo
+
+O operador `Operador Demo` executa todo o fluxo sem acessar um portal externo. Ele gera um PDF válido, registra o boleto no banco, adiciona a execução ao histórico e cria uma notificação.
+
+Para demonstrar:
+
+1. Entre com a credencial seedada.
+2. Em `Contas`, adicione uma conta para `Operador Demo`.
+3. Preencha login, identificador e senha com valores fictícios não vazios.
+4. Clique em `Executar`.
+5. Abra `Boletos` e faça o download do PDF gerado.
+
+Os arquivos ficam em `App_Data/demo-bills` por padrão. O diretório pode ser alterado com `Automation__Demo__StorageDirectory`. Esse operador é simulado; Vero Internet e RMS Telecom permanecem como automações reais e dependem dos respectivos portais.
+
 ## Automação Vero Internet
 
 A operadora `Vero Internet` usa uma integração Selenium baseada no projeto `Edyeex/AutoBot`.

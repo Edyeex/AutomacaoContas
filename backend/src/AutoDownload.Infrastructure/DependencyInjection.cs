@@ -15,6 +15,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AccessTokenOptions>(configuration.GetSection("Security:AccessToken"));
+        services.Configure<DemoAutomationOptions>(configuration.GetSection("Automation:Demo"));
         services.Configure<VeroInternetAutomationOptions>(configuration.GetSection("Automation:VeroInternet"));
         services.Configure<RmsTelecomAutomationOptions>(configuration.GetSection("Automation:RmsTelecom"));
 
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationRepository, EfNotificationRepository>();
         services.AddScoped<DatabaseSeeder>();
 
+        services.AddSingleton<IDemoBillPdfGenerator, DemoBillPdfGenerator>();
         services.AddSingleton<IOperatorAutomationStrategy, VeroInternetAutomationStrategy>();
         services.AddSingleton<IOperatorAutomationStrategy, RmsTelecomAutomationStrategy>();
         services.AddSingleton<IOperatorAutomationStrategy, DemoOperatorAutomationStrategy>();

@@ -2,6 +2,7 @@ using AutoDownload.Application.Abstractions;
 using AutoDownload.Domain.Entities;
 using AutoDownload.Domain.Enums;
 using AutoDownload.Domain.ValueObjects;
+using AutoDownload.Infrastructure.Automation;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoDownload.Infrastructure.Persistence;
@@ -13,6 +14,7 @@ internal sealed class DatabaseSeeder
     private static readonly Guid CorsanId = Guid.Parse("6a220e0d-42b4-4cab-9723-aa10ab398083");
     private static readonly Guid VeroId = Guid.Parse("19783f49-1ef3-49ce-af82-e2068126ff7f");
     private static readonly Guid RmsId = Guid.Parse("4dd22bb7-875a-4811-8b78-2c1cc4c6df26");
+    private static readonly Guid DemoOperatorId = Guid.Parse("0d2ae631-e8a5-4df6-9068-9286047de9cf");
     private static readonly Guid LegacyClaroId = Guid.Parse("bdb01b8f-39c5-4f58-9f6c-f9839e118f8b");
     private static readonly Guid CeeeAccountId = Guid.Parse("dcd144e0-82f9-4c60-8a91-3ea9de5be1af");
     private static readonly Guid CorsanAccountId = Guid.Parse("67d8eeb1-915e-4dcb-a3a0-a012fa476b97");
@@ -22,17 +24,20 @@ internal sealed class DatabaseSeeder
     private readonly IPasswordHasher passwordHasher;
     private readonly ICredentialProtector credentialProtector;
     private readonly IClock clock;
+    private readonly IDemoBillPdfGenerator demoBillPdfGenerator;
 
     public DatabaseSeeder(
         AutoDownloadDbContext dbContext,
         IPasswordHasher passwordHasher,
         ICredentialProtector credentialProtector,
-        IClock clock)
+        IClock clock,
+        IDemoBillPdfGenerator demoBillPdfGenerator)
     {
         this.dbContext = dbContext;
         this.passwordHasher = passwordHasher;
         this.credentialProtector = credentialProtector;
         this.clock = clock;
+        this.demoBillPdfGenerator = demoBillPdfGenerator;
     }
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
@@ -52,6 +57,9 @@ internal sealed class DatabaseSeeder
         await EnsureOperatorAsync(
             new OperatorCompany(RmsId, "rms-telecom", "RMS Telecom", ServiceType.Internet, new Uri("https://fatura.rmstelecom.net/login"), true),
             cancellationToken);
+        await EnsureOperatorAsync(
+            new OperatorCompany(DemoOperatorId, DemoOperatorAutomationStrategy.OperatorCode, "Operador Demo", ServiceType.Internet, new Uri("https://demo.autodownload.local/"), true),
+            cancellationToken);
 
         await DeactivateLegacyClaroSeedAsync(timeline.Now, cancellationToken);
         var demoUserCreated = await EnsureDemoUserAsync(demoEmail, timeline, cancellationToken);
@@ -59,6 +67,10 @@ internal sealed class DatabaseSeeder
         {
             await EnsureDemoAccountsAsync(timeline, cancellationToken);
             await RefreshDemoOperationalDataAsync(timeline, cancellationToken);
+        }
+        else
+        {
+            await EnsureDemoBillFilesAsync(cancellationToken);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -199,10 +211,10 @@ internal sealed class DatabaseSeeder
             .ExecuteDeleteAsync(cancellationToken);
 
         dbContext.Bills.AddRange(
-            BuildBill(CeeeAccountId, CeeeId, ServiceType.Energy, "ceee", 187.42m, timeline.CurrentReference, timeline.CurrentDownloadAt),
-            BuildBill(CorsanAccountId, CorsanId, ServiceType.Water, "corsan", 94.18m, timeline.CurrentReference, timeline.CurrentDownloadAt.AddMinutes(2)),
-            BuildBill(CeeeAccountId, CeeeId, ServiceType.Energy, "ceee", 203.55m, timeline.PreviousReference, timeline.PreviousDownloadAt),
-            BuildBill(CorsanAccountId, CorsanId, ServiceType.Water, "corsan", 88.30m, timeline.PreviousReference, timeline.PreviousDownloadAt.AddMinutes(2)));
+            await BuildBillAsync(CeeeAccountId, CeeeId, "CEEE Equatorial", ServiceType.Energy, "ceee", 187.42m, timeline.CurrentReference, timeline.CurrentDownloadAt, cancellationToken),
+            await BuildBillAsync(CorsanAccountId, CorsanId, "CORSAN", ServiceType.Water, "corsan", 94.18m, timeline.CurrentReference, timeline.CurrentDownloadAt.AddMinutes(2), cancellationToken),
+            await BuildBillAsync(CeeeAccountId, CeeeId, "CEEE Equatorial", ServiceType.Energy, "ceee", 203.55m, timeline.PreviousReference, timeline.PreviousDownloadAt, cancellationToken),
+            await BuildBillAsync(CorsanAccountId, CorsanId, "CORSAN", ServiceType.Water, "corsan", 88.30m, timeline.PreviousReference, timeline.PreviousDownloadAt.AddMinutes(2), cancellationToken));
 
         dbContext.AutomationRuns.AddRange(
             AutomationRun.Create(DemoUserId, CeeeAccountId, CeeeId, timeline.CurrentDownloadAt, timeline.CurrentDownloadAt.AddSeconds(12), AutomationRunStatus.Success, $"Boleto de {BillReference.FromDate(timeline.CurrentReference)} baixado com sucesso.", FileName("ceee", timeline.CurrentReference)),
@@ -258,24 +270,77 @@ internal sealed class DatabaseSeeder
             .ExecuteDeleteAsync(cancellationToken);
     }
 
-    private static Bill BuildBill(
+    private async Task EnsureDemoBillFilesAsync(CancellationToken cancellationToken)
+    {
+        var demoAccountIds = new[] { CeeeAccountId, CorsanAccountId };
+        var demoBills = await dbContext.Bills
+            .Where(bill => bill.UserId == DemoUserId && demoAccountIds.Contains(bill.AccountId))
+            .ToListAsync(cancellationToken);
+
+        foreach (var bill in demoBills)
+        {
+            if (File.Exists(bill.StoragePath))
+            {
+                continue;
+            }
+
+            var operatorName = bill.OperatorId == CeeeId ? "CEEE Equatorial" : "CORSAN";
+            var storagePath = await demoBillPdfGenerator.GenerateAsync(
+                new DemoBillDocument(
+                    bill.UserId,
+                    bill.AccountId,
+                    operatorName,
+                    bill.Reference,
+                    bill.DueDate,
+                    bill.Amount,
+                    bill.FileName),
+                cancellationToken);
+
+            bill.RefreshDownload(
+                bill.DueDate,
+                bill.Amount,
+                bill.FileName,
+                storagePath,
+                bill.DownloadedAt);
+        }
+    }
+
+    private async Task<Bill> BuildBillAsync(
         Guid accountId,
         Guid operatorId,
+        string operatorName,
         ServiceType serviceType,
         string prefix,
         decimal amount,
         DateOnly reference,
-        DateTimeOffset downloadedAt)
-        => Bill.Create(
+        DateTimeOffset downloadedAt,
+        CancellationToken cancellationToken)
+    {
+        var billReference = BillReference.FromDate(reference);
+        var dueDate = BuildDueDate(serviceType, reference);
+        var fileName = FileName(prefix, reference);
+        var storagePath = await demoBillPdfGenerator.GenerateAsync(
+            new DemoBillDocument(
+                DemoUserId,
+                accountId,
+                operatorName,
+                billReference,
+                dueDate,
+                amount,
+                fileName),
+            cancellationToken);
+
+        return Bill.Create(
             DemoUserId,
             accountId,
             operatorId,
-            BillReference.FromDate(reference),
-            BuildDueDate(serviceType, reference),
+            billReference,
+            dueDate,
             amount,
-            FileName(prefix, reference),
-            $"/storage/boletos/seed/{FileName(prefix, reference)}",
+            fileName,
+            storagePath,
             downloadedAt);
+    }
 
     private static DateOnly BuildDueDate(ServiceType serviceType, DateOnly reference)
     {
