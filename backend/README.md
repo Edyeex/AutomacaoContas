@@ -18,6 +18,20 @@ Padrões aplicados:
 - Result Pattern para respostas previsíveis de casos de uso.
 - Adapter/Port para criptografia, JWT, hash de senha, clock e automação.
 
+## Configuração Segura
+
+O repositório não contém senha do PostgreSQL nem chave de assinatura JWT. Em desenvolvimento, esses valores ficam no `user-secrets` do .NET, fora da pasta do projeto. Em hospedagem, configure as variáveis descritas em `backend/.env.example`.
+
+As chaves usadas pela API são:
+
+```text
+ConnectionStrings__AutoDownload
+Security__AccessToken__SigningKey
+Cors__AllowedOrigins__0
+```
+
+Não coloque valores reais em `appsettings.json` nem faça commit de arquivos `.env`.
+
 ## PostgreSQL Local Sem Docker
 
 Instale o PostgreSQL direto no Windows. Pelo terminal do VS Code, você pode instalar com:
@@ -32,13 +46,13 @@ Depois execute, na raiz do projeto:
 .\database\create-autodownload-db.ps1
 ```
 
-O script pede a senha do usuário administrador `postgres`, cria o usuário/banco `autodownload` e aplica as migrations do Entity Framework.
+O script pede uma senha para o usuário da aplicação e a senha do administrador `postgres`. Depois ele cria o usuário/banco `autodownload`, gera uma chave JWT aleatória, salva as configurações no `user-secrets` e aplica as migrations do Entity Framework.
 
 Se preferir fazer pelo **pgAdmin**, crie:
 
 ```text
 Usuário: autodownload
-Senha: autodownload
+Senha: escolha uma senha local forte
 Database: autodownload
 Owner do database: autodownload
 ```
@@ -47,21 +61,16 @@ No pgAdmin, o caminho é:
 
 1. Clique com botão direito em `Login/Group Roles`.
 2. Crie o usuário `autodownload`.
-3. Em `Definition`, coloque a senha `autodownload`.
+3. Em `Definition`, coloque a senha local escolhida.
 4. Clique com botão direito em `Databases`.
 5. Crie o banco `autodownload`.
 6. Em `Owner`, selecione `autodownload`.
 
-A connection string padrão já está configurada em `backend/src/AutoDownload.Api/appsettings.json`:
-
-```text
-Host=localhost;Port=5432;Database=autodownload;Username=autodownload;Password=autodownload
-```
-
-Se você preferir usar outro usuário ou senha do PostgreSQL local, rode no terminal antes de iniciar a API:
+Se criar o banco manualmente pelo pgAdmin, configure os segredos antes de iniciar a API:
 
 ```powershell
-$env:ConnectionStrings__AutoDownload="Host=localhost;Port=5432;Database=autodownload;Username=postgres;Password=SUA_SENHA"
+dotnet user-secrets set "ConnectionStrings:AutoDownload" "Host=localhost;Port=5432;Database=autodownload;Username=autodownload;Password=SUA_SENHA" --project .\backend\src\AutoDownload.Api\AutoDownload.Api.csproj
+dotnet user-secrets set "Security:AccessToken:SigningKey" "UMA_CHAVE_ALEATORIA_COM_PELO_MENOS_32_CARACTERES" --project .\backend\src\AutoDownload.Api\AutoDownload.Api.csproj
 ```
 
 ## Executar API

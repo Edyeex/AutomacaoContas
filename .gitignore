@@ -11,3 +11,9 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# Environment files and local secrets
+**/.env*
+!**/.env.example
+**/appsettings.Local.json
+**/appsettings.*.local.json

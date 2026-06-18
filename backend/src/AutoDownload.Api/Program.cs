@@ -19,6 +19,13 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 var tokenOptions = builder.Configuration.GetSection("Security:AccessToken").Get<AccessTokenOptions>()
     ?? new AccessTokenOptions();
 
+if (string.IsNullOrWhiteSpace(tokenOptions.SigningKey) || tokenOptions.SigningKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "Security:AccessToken:SigningKey must contain at least 32 characters. " +
+        "Configure it with user-secrets or the Security__AccessToken__SigningKey environment variable.");
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("frontend", policy =>

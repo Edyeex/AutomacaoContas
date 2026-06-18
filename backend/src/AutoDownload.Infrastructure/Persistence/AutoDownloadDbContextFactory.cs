@@ -15,8 +15,13 @@ public sealed class AutoDownloadDbContextFactory : IDesignTimeDbContextFactory<A
             .AddEnvironmentVariables()
             .Build();
 
-        var connectionString = configuration.GetConnectionString("AutoDownload")
-            ?? "Host=localhost;Port=5432;Database=autodownload;Username=autodownload;Password=autodownload";
+        var connectionString = configuration.GetConnectionString("AutoDownload");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "Connection string 'AutoDownload' is required. Configure it with user-secrets or " +
+                "the ConnectionStrings__AutoDownload environment variable.");
+        }
 
         var options = new DbContextOptionsBuilder<AutoDownloadDbContext>()
             .UseNpgsql(connectionString, npgsql =>
