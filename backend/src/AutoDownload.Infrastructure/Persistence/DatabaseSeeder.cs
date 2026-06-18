@@ -164,7 +164,10 @@ internal sealed class DatabaseSeeder
                 timeline.AccountCreatedAt,
                 timeline.AccountUpdatedAt,
                 timeline.LastRunAt,
-                timeline.NextRunAt));
+                null,
+                false,
+                null,
+                new TimeOnly(9, 0)));
             return;
         }
 
@@ -181,8 +184,7 @@ internal sealed class DatabaseSeeder
                     .SetProperty(account => account.Status, AccountStatus.Active)
                     .SetProperty(account => account.CreatedAt, timeline.AccountCreatedAt)
                     .SetProperty(account => account.UpdatedAt, timeline.AccountUpdatedAt)
-                    .SetProperty(account => account.LastRunAt, timeline.LastRunAt)
-                    .SetProperty(account => account.NextRunAt, timeline.NextRunAt),
+                    .SetProperty(account => account.LastRunAt, timeline.LastRunAt),
                 cancellationToken);
     }
 
@@ -364,7 +366,6 @@ internal sealed class DatabaseSeeder
         DateTimeOffset AccountCreatedAt,
         DateTimeOffset AccountUpdatedAt,
         DateTimeOffset LastRunAt,
-        DateTimeOffset NextRunAt,
         DateTimeOffset CurrentDownloadAt,
         DateTimeOffset PreviousDownloadAt,
         DateTimeOffset FailedRunAt,
@@ -386,7 +387,6 @@ internal sealed class DatabaseSeeder
                 currentDownloadAt.AddDays(-28).ToUniversalTime(),
                 currentDownloadAt.AddDays(-1).ToUniversalTime(),
                 currentDownloadAt.ToUniversalTime(),
-                currentDownloadAt.AddDays(5).ToUniversalTime(),
                 currentDownloadAt.ToUniversalTime(),
                 previousDownloadAt.ToUniversalTime(),
                 failedRunAt.ToUniversalTime(),

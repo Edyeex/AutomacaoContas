@@ -80,7 +80,10 @@ internal sealed class EfUserAccountRepository : IUserAccountRepository
 
     public async Task<IReadOnlyList<UserAccount>> ListDueAsync(DateTimeOffset dueAt, CancellationToken cancellationToken = default)
         => await dbContext.Accounts
-            .Where(account => account.Status == AccountStatus.Active && account.NextRunAt <= dueAt)
+            .Where(account =>
+                account.Status == AccountStatus.Active &&
+                account.IsScheduleEnabled &&
+                account.NextRunAt <= dueAt)
             .OrderBy(account => account.NextRunAt)
             .ToListAsync(cancellationToken);
 

@@ -27,7 +27,11 @@ internal static class ResponseMapper
             account.CustomerIdentifier,
             ToAccountStatusLabel(account.Status),
             account.LastRunAt,
-            account.NextRunAt);
+            account.NextRunAt,
+            account.IsScheduleEnabled,
+            account.ScheduleDayOfMonth,
+            account.ScheduleDayOfMonth is null,
+            account.ScheduleTime);
 
     public static BillResponse ToResponse(this Bill bill, OperatorCompany operatorCompany)
         => new(

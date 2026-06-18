@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.Configure<DemoAutomationOptions>(configuration.GetSection("Automation:Demo"));
         services.Configure<VeroInternetAutomationOptions>(configuration.GetSection("Automation:VeroInternet"));
         services.Configure<RmsTelecomAutomationOptions>(configuration.GetSection("Automation:RmsTelecom"));
+        services.Configure<MonthlyScheduleOptions>(configuration.GetSection("Automation:Scheduler"));
 
         services.AddDataProtection().SetApplicationName("AutoDownload");
 
@@ -25,6 +26,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
         services.AddSingleton<ICredentialProtector, DataProtectionCredentialProtector>();
         services.AddSingleton<IAccessTokenService, JwtAccessTokenService>();
+        services.AddSingleton<IMonthlyScheduleCalculator, MonthlyScheduleCalculator>();
 
         var connectionString = configuration.GetConnectionString("AutoDownload")
             ?? throw new InvalidOperationException("Connection string 'AutoDownload' is required.");

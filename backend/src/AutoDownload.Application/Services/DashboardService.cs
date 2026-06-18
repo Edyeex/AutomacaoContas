@@ -52,7 +52,7 @@ public sealed class DashboardService
             visibleRuns.Count(item => item.Status == AutomationRunStatus.Success),
             visibleRuns.Count(item => item.Status != AutomationRunStatus.Success),
             visibleAccounts
-                .Where(item => item.NextRunAt.HasValue)
+                .Where(item => item.IsScheduleEnabled && item.NextRunAt.HasValue)
                 .OrderBy(item => item.NextRunAt)
                 .Select(item => item.NextRunAt)
                 .FirstOrDefault(),

@@ -10,13 +10,26 @@ function formatDate(d) {
   return d ? new Date(d).toLocaleDateString("pt-BR") : "-";
 }
 
+function formatDateTime(d) {
+  if (!d) return "-";
+  return new Date(d).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function ContasPage() {
   const { data: apiContas, loading, error, usingFallback, reload } = useApiResource("/accounts", contas);
   const { data: apiOperadoras } = useApiResource("/operators", operadoras);
   const [list, setList] = useState(contas);
   const [modal, setModal] = useState(null);
   const [editItem, setEditItem] = useState(null);
+  const [scheduleItem, setScheduleItem] = useState(null);
   const [form, setForm] = useState({ operadoraId: "", login: "", senha: "", unidade: "" });
+  const [scheduleForm, setScheduleForm] = useState({ enabled: true, mode: "day", day: "1", time: "09:00" });
   const [formError, setFormError] = useState("");
   const [pageMessage, setPageMessage] = useState("");
   const accountCount = list.length;
@@ -45,14 +58,34 @@ export default function ContasPage() {
     setModal("edit");
   }
 
+  function openSchedule(conta) {
+    setScheduleItem(conta);
+    setScheduleForm({
+      enabled: conta.agendamentoAtivo ?? true,
+      mode: conta.ultimoDiaDoMes ? "last" : "day",
+      day: String(conta.diaAgendamento || 1),
+      time: String(conta.horarioAgendamento || "09:00").slice(0, 5),
+    });
+    setFormError("");
+  }
+
   function closeModal() {
     setModal(null);
     setEditItem(null);
     setFormError("");
   }
 
+  function closeSchedule() {
+    setScheduleItem(null);
+    setFormError("");
+  }
+
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function updateSchedule(field, value) {
+    setScheduleForm((prev) => ({ ...prev, [field]: value, enabled: true }));
   }
 
   async function handleSave(e) {
@@ -90,6 +123,49 @@ export default function ContasPage() {
       closeModal();
     } catch (err) {
       setFormError(err.message || "Não foi possível salvar a conta.");
+    }
+  }
+
+  async function handleScheduleSave(e) {
+    e.preventDefault();
+    setFormError("");
+    const day = Number(scheduleForm.day);
+
+    if (scheduleForm.enabled && scheduleForm.mode === "day" && (!Number.isInteger(day) || day < 1 || day > 31)) {
+      setFormError("Informe um dia entre 1 e 31.");
+      return;
+    }
+
+    const body = {
+      enabled: scheduleForm.enabled,
+      dayOfMonth: scheduleForm.enabled && scheduleForm.mode === "day" ? day : null,
+      lastDayOfMonth: scheduleForm.enabled && scheduleForm.mode === "last",
+      time: `${scheduleForm.time || "09:00"}:00`,
+    };
+
+    if (usingFallback) {
+      setList((prev) => prev.map((conta) => conta.id === scheduleItem.id
+        ? {
+            ...conta,
+            agendamentoAtivo: body.enabled,
+            diaAgendamento: body.dayOfMonth,
+            ultimoDiaDoMes: body.lastDayOfMonth,
+            horarioAgendamento: body.time,
+          }
+        : conta));
+      closeSchedule();
+      return;
+    }
+
+    try {
+      await apiRequest(`/accounts/${scheduleItem.id}/schedule`, { method: "PUT", body });
+      await reload();
+      publishDashboardCountsChanged();
+      await refreshUnreadCount();
+      setPageMessage(body.enabled ? "Agendamento mensal ativado." : "Agendamento mensal desativado.");
+      closeSchedule();
+    } catch (err) {
+      setFormError(err.message || "Não foi possível salvar o agendamento.");
     }
   }
 
@@ -212,6 +288,9 @@ export default function ContasPage() {
                     <button className="btn btn-secondary btn-sm" onClick={() => openEdit(conta)}>
                       Editar
                     </button>
+                    <button className="btn btn-secondary btn-sm" onClick={() => openSchedule(conta)}>
+                      Agendar
+                    </button>
                     <button className="btn btn-danger btn-sm" onClick={() => handleRemove(conta.id)}>
                       Remover
                     </button>
@@ -234,6 +313,20 @@ export default function ContasPage() {
                 <div className="account-detail">
                   <span className="account-detail-label">Última execução</span>
                   <span className="account-detail-value">{formatDate(conta.ultimaExecucao)}</span>
+                </div>
+                <div className="account-detail">
+                  <span className="account-detail-label">Agendamento</span>
+                  <span className="account-detail-value">
+                    <span className={`status ${conta.agendamentoAtivo ? "status-info" : "status-neutral"}`}>
+                      {conta.agendamentoAtivo ? "Ativo" : "Inativo"}
+                    </span>
+                  </span>
+                </div>
+                <div className="account-detail">
+                  <span className="account-detail-label">Próxima execução</span>
+                  <span className="account-detail-value">
+                    {formatDateTime(conta.agendamentoAtivo ? conta.proximaExecucao : null)}
+                  </span>
                 </div>
               </div>
             ))}
@@ -312,6 +405,88 @@ export default function ContasPage() {
                 <button type="submit" className="btn btn-primary">
                   {modal === "add" ? "Adicionar" : "Salvar"}
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {scheduleItem && (
+        <div className="modal-overlay" onClick={closeSchedule}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h2>Agendamento mensal</h2>
+                <p className="modal-subtitle">{scheduleItem.operadora}</p>
+              </div>
+              <button className="modal-close" onClick={closeSchedule} aria-label="Fechar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleScheduleSave}>
+              <div className="modal-body">
+                {formError && <p className="form-error">{formError}</p>}
+                <label className="schedule-toggle">
+                  <input
+                    type="checkbox"
+                    checked={scheduleForm.enabled}
+                    onChange={(e) => setScheduleForm((prev) => ({ ...prev, enabled: e.target.checked }))}
+                  />
+                  <span>
+                    <strong>Executar automaticamente</strong>
+                    <small>Continua ativo todos os meses até que você desative.</small>
+                  </span>
+                </label>
+
+                <div className="form-group">
+                  <label>Quando executar</label>
+                  <select
+                    className="form-select"
+                    value={scheduleForm.mode}
+                    onChange={(e) => updateSchedule("mode", e.target.value)}
+                  >
+                    <option value="day">Em um dia do mês</option>
+                    <option value="last">No último dia do mês</option>
+                  </select>
+                </div>
+
+                {scheduleForm.mode === "day" && (
+                  <div className="form-group">
+                    <label>Dia do mês</label>
+                    <input
+                      className="form-input"
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={scheduleForm.day}
+                      onChange={(e) => updateSchedule("day", e.target.value)}
+                    />
+                    <p className="form-hint">Em meses mais curtos, será usado o último dia disponível.</p>
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label>Horário</label>
+                  <input
+                    className="form-input"
+                    type="time"
+                    value={scheduleForm.time}
+                    onChange={(e) => updateSchedule("time", e.target.value)}
+                  />
+                </div>
+
+                {scheduleItem.agendamentoAtivo && (
+                  <p className="schedule-next">
+                    Próxima execução atual: <strong>{formatDateTime(scheduleItem.proximaExecucao)}</strong>
+                  </p>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={closeSchedule}>Cancelar</button>
+                <button type="submit" className="btn btn-primary">Salvar agendamento</button>
               </div>
             </form>
           </div>

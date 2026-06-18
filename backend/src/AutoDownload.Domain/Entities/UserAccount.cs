@@ -18,7 +18,10 @@ public sealed class UserAccount : Entity
         DateTimeOffset createdAt,
         DateTimeOffset updatedAt,
         DateTimeOffset? lastRunAt,
-        DateTimeOffset? nextRunAt)
+        DateTimeOffset? nextRunAt,
+        bool isScheduleEnabled,
+        int? scheduleDayOfMonth,
+        TimeOnly scheduleTime)
         : base(id)
     {
         UserId = EnsureGuid(userId, nameof(userId));
@@ -31,6 +34,9 @@ public sealed class UserAccount : Entity
         UpdatedAt = updatedAt;
         LastRunAt = lastRunAt;
         NextRunAt = nextRunAt;
+        IsScheduleEnabled = isScheduleEnabled;
+        ScheduleDayOfMonth = scheduleDayOfMonth;
+        ScheduleTime = scheduleTime;
     }
 
     public Guid UserId { get; }
@@ -53,14 +59,19 @@ public sealed class UserAccount : Entity
 
     public DateTimeOffset? NextRunAt { get; private set; }
 
+    public bool IsScheduleEnabled { get; private set; }
+
+    public int? ScheduleDayOfMonth { get; private set; }
+
+    public TimeOnly ScheduleTime { get; private set; }
+
     public static UserAccount Create(
         Guid userId,
         Guid operatorId,
         string portalLogin,
         string encryptedPortalPassword,
         string customerIdentifier,
-        DateTimeOffset now,
-        DateTimeOffset nextRunAt)
+        DateTimeOffset now)
         => new(
             Guid.NewGuid(),
             userId,
@@ -72,7 +83,10 @@ public sealed class UserAccount : Entity
             now,
             now,
             null,
-            nextRunAt);
+            null,
+            false,
+            null,
+            new TimeOnly(9, 0));
 
     public void Update(
         Guid operatorId,
@@ -93,10 +107,35 @@ public sealed class UserAccount : Entity
         UpdatedAt = now;
     }
 
-    public void MarkAutomationRun(DateTimeOffset ranAt, DateTimeOffset nextRunAt)
+    public void ConfigureMonthlySchedule(
+        int? dayOfMonth,
+        TimeOnly scheduleTime,
+        DateTimeOffset nextRunAt,
+        DateTimeOffset now)
+    {
+        if (dayOfMonth is < 1 or > 31)
+        {
+            throw new DomainException("Schedule day must be between 1 and 31.");
+        }
+
+        IsScheduleEnabled = true;
+        ScheduleDayOfMonth = dayOfMonth;
+        ScheduleTime = scheduleTime;
+        NextRunAt = nextRunAt;
+        UpdatedAt = now;
+    }
+
+    public void DisableMonthlySchedule(DateTimeOffset now)
+    {
+        IsScheduleEnabled = false;
+        NextRunAt = null;
+        UpdatedAt = now;
+    }
+
+    public void MarkAutomationRun(DateTimeOffset ranAt, DateTimeOffset? nextRunAt)
     {
         LastRunAt = ranAt;
-        NextRunAt = nextRunAt;
+        NextRunAt = IsScheduleEnabled ? nextRunAt : null;
         UpdatedAt = ranAt;
     }
 

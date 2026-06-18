@@ -97,7 +97,11 @@ public sealed class AutoDownloadDbContext : DbContext, IUnitOfWork
             entity.Property(account => account.UpdatedAt).IsRequired();
             entity.Property(account => account.LastRunAt);
             entity.Property(account => account.NextRunAt);
+            entity.Property(account => account.IsScheduleEnabled).IsRequired();
+            entity.Property(account => account.ScheduleDayOfMonth);
+            entity.Property(account => account.ScheduleTime).HasDefaultValue(new TimeOnly(9, 0)).IsRequired();
             entity.HasIndex(account => new { account.UserId, account.OperatorId, account.CustomerIdentifier }).IsUnique();
+            entity.HasIndex(account => new { account.IsScheduleEnabled, account.NextRunAt });
             entity.HasOne<AppUser>().WithMany().HasForeignKey(account => account.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne<OperatorCompany>().WithMany().HasForeignKey(account => account.OperatorId).OnDelete(DeleteBehavior.Restrict);
         });

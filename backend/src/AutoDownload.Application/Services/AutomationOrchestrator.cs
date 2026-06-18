@@ -17,6 +17,7 @@ public sealed class AutomationOrchestrator
     private readonly INotificationRepository notifications;
     private readonly IOperatorAutomationStrategyResolver strategyResolver;
     private readonly ICredentialProtector credentialProtector;
+    private readonly IMonthlyScheduleCalculator scheduleCalculator;
     private readonly IClock clock;
     private readonly IUnitOfWork unitOfWork;
 
@@ -28,6 +29,7 @@ public sealed class AutomationOrchestrator
         INotificationRepository notifications,
         IOperatorAutomationStrategyResolver strategyResolver,
         ICredentialProtector credentialProtector,
+        IMonthlyScheduleCalculator scheduleCalculator,
         IClock clock,
         IUnitOfWork unitOfWork)
     {
@@ -38,6 +40,7 @@ public sealed class AutomationOrchestrator
         this.notifications = notifications;
         this.strategyResolver = strategyResolver;
         this.credentialProtector = credentialProtector;
+        this.scheduleCalculator = scheduleCalculator;
         this.clock = clock;
         this.unitOfWork = unitOfWork;
     }
@@ -132,7 +135,14 @@ public sealed class AutomationOrchestrator
             result.Bill?.FileName ?? createdBill?.FileName);
 
         await runs.AddAsync(run, cancellationToken);
-        account.MarkAutomationRun(startedAt, startedAt.AddDays(5));
+        DateTimeOffset? nextRunAt = account.IsScheduleEnabled
+            ? scheduleCalculator.CalculateNext(
+                finishedAt,
+                finishedAt,
+                account.ScheduleDayOfMonth,
+                account.ScheduleTime)
+            : null;
+        account.MarkAutomationRun(finishedAt, nextRunAt);
 
         await notifications.AddAsync(
             Notification.Create(

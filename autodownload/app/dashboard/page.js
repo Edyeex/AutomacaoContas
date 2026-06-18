@@ -9,7 +9,10 @@ const fallbackDashboard = {
   totalBoletos: boletos.length,
   execucoesSucesso: historico.filter((h) => h.status === "sucesso").length,
   execucoesFalha: historico.filter((h) => h.status === "falha").length,
-  proximaExecucao: contas.map((c) => c.proximaExecucao).find((d) => d && d !== "-"),
+  proximaExecucao: contas
+    .filter((c) => c.agendamentoAtivo)
+    .map((c) => c.proximaExecucao)
+    .find((d) => d && d !== "-"),
   boletosRecentes: boletos.slice(0, 3),
   historicoRecente: historico.slice(0, 5),
 };
@@ -81,7 +84,9 @@ export default function DashboardPage() {
           <div className="stat-item">
             <div className="stat-label">Próxima execução</div>
             <div className="stat-value" style={{ fontSize: 18 }}>{formatDate(dashboard.proximaExecucao)}</div>
-            <div className="stat-sub">agendamento automático</div>
+            <div className="stat-sub">
+              {dashboard.proximaExecucao ? "agendamento automático" : "nenhum agendamento ativo"}
+            </div>
           </div>
         </div>
 

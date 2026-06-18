@@ -142,6 +142,14 @@ secure.MapPut("/accounts/{accountId:guid}", async (
         CancellationToken cancellationToken)
     => (await service.UpdateAsync(context.User.GetRequiredUserId(), accountId, request, cancellationToken)).ToHttpResult());
 
+secure.MapPut("/accounts/{accountId:guid}/schedule", async (
+        Guid accountId,
+        AccountScheduleRequest request,
+        HttpContext context,
+        AccountService service,
+        CancellationToken cancellationToken)
+    => (await service.ConfigureScheduleAsync(context.User.GetRequiredUserId(), accountId, request, cancellationToken)).ToHttpResult());
+
 secure.MapDelete("/accounts/{accountId:guid}", async (
         Guid accountId,
         HttpContext context,

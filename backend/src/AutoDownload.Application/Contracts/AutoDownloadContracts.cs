@@ -14,6 +14,12 @@ public sealed record AccountUpdateRequest(
     string? SenhaPortal,
     string UnidadeConsumidora);
 
+public sealed record AccountScheduleRequest(
+    bool Enabled,
+    int? DayOfMonth,
+    bool LastDayOfMonth,
+    TimeOnly Time);
+
 public sealed record AccountResponse(
     Guid Id,
     Guid OperadoraId,
@@ -24,7 +30,11 @@ public sealed record AccountResponse(
     string UnidadeConsumidora,
     string Status,
     DateTimeOffset? UltimaExecucao,
-    DateTimeOffset? ProximaExecucao);
+    DateTimeOffset? ProximaExecucao,
+    bool AgendamentoAtivo,
+    int? DiaAgendamento,
+    bool UltimoDiaDoMes,
+    TimeOnly HorarioAgendamento);
 
 public sealed record BillResponse(
     Guid Id,

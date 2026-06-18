@@ -14,6 +14,7 @@ public sealed class AccountService
     private readonly IOperatorRepository operators;
     private readonly INotificationRepository notifications;
     private readonly ICredentialProtector credentialProtector;
+    private readonly IMonthlyScheduleCalculator scheduleCalculator;
     private readonly IClock clock;
     private readonly IUnitOfWork unitOfWork;
 
@@ -22,6 +23,7 @@ public sealed class AccountService
         IOperatorRepository operators,
         INotificationRepository notifications,
         ICredentialProtector credentialProtector,
+        IMonthlyScheduleCalculator scheduleCalculator,
         IClock clock,
         IUnitOfWork unitOfWork)
     {
@@ -29,6 +31,7 @@ public sealed class AccountService
         this.operators = operators;
         this.notifications = notifications;
         this.credentialProtector = credentialProtector;
+        this.scheduleCalculator = scheduleCalculator;
         this.clock = clock;
         this.unitOfWork = unitOfWork;
     }
@@ -71,8 +74,7 @@ public sealed class AccountService
                 request.LoginPortal,
                 credentialProtector.Protect(request.SenhaPortal),
                 request.UnidadeConsumidora,
-                clock.Now,
-                clock.Now.AddDays(5));
+                clock.Now);
 
             await accounts.AddAsync(account, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -153,6 +155,92 @@ public sealed class AccountService
 
         return Result.Success();
     }
+
+    public async Task<Result<AccountResponse>> ConfigureScheduleAsync(
+        Guid userId,
+        Guid accountId,
+        AccountScheduleRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var account = await accounts.FindByIdForUserAsync(userId, accountId, cancellationToken);
+        if (account is null)
+        {
+            return Result<AccountResponse>.Failure(Error.NotFound("account.not_found", "Account not found."));
+        }
+
+        var operatorCompany = await operators.FindByIdAsync(account.OperatorId, cancellationToken);
+        if (operatorCompany is null)
+        {
+            return Result<AccountResponse>.Failure(Error.NotFound("operator.not_found", "Operator not found."));
+        }
+
+        try
+        {
+            if (!request.Enabled)
+            {
+                account.DisableMonthlySchedule(clock.Now);
+                await AddScheduleNotificationAsync(userId, operatorCompany.Name, "desativado", cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                return Result<AccountResponse>.Success(account.ToResponse(operatorCompany));
+            }
+
+            if (request.LastDayOfMonth && request.DayOfMonth.HasValue)
+            {
+                return Result<AccountResponse>.Failure(Error.Validation(
+                    "account.schedule_day_conflict",
+                    "Choose a day of the month or the last day, not both."));
+            }
+
+            if (!request.LastDayOfMonth && request.DayOfMonth is null)
+            {
+                return Result<AccountResponse>.Failure(Error.Validation(
+                    "account.schedule_day_required",
+                    "Schedule day is required."));
+            }
+
+            var dayOfMonth = request.LastDayOfMonth ? null : request.DayOfMonth;
+            var now = clock.Now;
+            var nextRunAt = scheduleCalculator.CalculateNext(
+                now,
+                account.LastRunAt,
+                dayOfMonth,
+                request.Time);
+
+            account.ConfigureMonthlySchedule(dayOfMonth, request.Time, nextRunAt, now);
+            var scheduleDescription = request.LastDayOfMonth
+                ? $"no último dia de cada mês às {request.Time:HH\\:mm}"
+                : $"todo dia {dayOfMonth} às {request.Time:HH\\:mm}";
+            await AddScheduleNotificationAsync(
+                userId,
+                operatorCompany.Name,
+                $"ativado para {scheduleDescription}",
+                cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return Result<AccountResponse>.Success(account.ToResponse(operatorCompany));
+        }
+        catch (DomainException ex)
+        {
+            return Result<AccountResponse>.Failure(Error.Validation("account.schedule_invalid", ex.Message));
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            return Result<AccountResponse>.Failure(Error.Validation("account.schedule_invalid", ex.Message));
+        }
+    }
+
+    private async Task AddScheduleNotificationAsync(
+        Guid userId,
+        string operatorName,
+        string action,
+        CancellationToken cancellationToken)
+        => await notifications.AddAsync(
+            Notification.Create(
+                userId,
+                $"Agendamento mensal da conta {operatorName} {action}.",
+                NotificationType.Info,
+                clock.Now),
+            cancellationToken);
 
     private async Task<IReadOnlyList<AccountResponse>> MapAccountsAsync(IReadOnlyList<UserAccount> userAccounts, CancellationToken cancellationToken)
     {

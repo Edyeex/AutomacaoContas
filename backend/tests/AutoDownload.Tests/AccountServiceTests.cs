@@ -20,6 +20,7 @@ public sealed class AccountServiceTests
             operators,
             new FakeNotificationRepository(),
             new FakeCredentialProtector(),
+            new FakeMonthlyScheduleCalculator(),
             new FakeClock(),
             unitOfWork);
 
@@ -53,6 +54,7 @@ public sealed class AccountServiceTests
             operators,
             new FakeNotificationRepository(),
             new FakeCredentialProtector(),
+            new FakeMonthlyScheduleCalculator(),
             new FakeClock(),
             unitOfWork);
 
@@ -84,6 +86,7 @@ public sealed class AccountServiceTests
             operators,
             notifications,
             new FakeCredentialProtector(),
+            new FakeMonthlyScheduleCalculator(),
             new FakeClock(),
             unitOfWork);
 
@@ -92,6 +95,45 @@ public sealed class AccountServiceTests
         Assert.True(result.IsSuccess);
         Assert.Empty(accounts.Items);
         Assert.Contains("removida", Assert.Single(notifications.Items).Text, StringComparison.Ordinal);
+        Assert.Equal(1, unitOfWork.SaveChangesCalls);
+    }
+
+    [Fact]
+    public async Task ConfigureScheduleAsync_EnablesRecurringScheduleAndPersistsNextRun()
+    {
+        var userId = Guid.NewGuid();
+        var operatorCompany = TestData.Operator();
+        var account = TestData.Account(userId, operatorCompany.Id);
+        var accounts = new FakeUserAccountRepository();
+        accounts.Items.Add(account);
+        var operators = new FakeOperatorRepository();
+        operators.Items.Add(operatorCompany);
+        var notifications = new FakeNotificationRepository();
+        var unitOfWork = new FakeUnitOfWork();
+        var calculator = new FakeMonthlyScheduleCalculator
+        {
+            Next = TestData.Now.AddMonths(1)
+        };
+        var service = new AccountService(
+            accounts,
+            operators,
+            notifications,
+            new FakeCredentialProtector(),
+            calculator,
+            new FakeClock(),
+            unitOfWork);
+
+        var result = await service.ConfigureScheduleAsync(
+            userId,
+            account.Id,
+            new AccountScheduleRequest(true, 25, false, new TimeOnly(8, 30)));
+
+        Assert.True(result.IsSuccess);
+        Assert.True(account.IsScheduleEnabled);
+        Assert.Equal(25, account.ScheduleDayOfMonth);
+        Assert.Equal(new TimeOnly(8, 30), account.ScheduleTime);
+        Assert.Equal(calculator.Next, account.NextRunAt);
+        Assert.Contains("ativado", Assert.Single(notifications.Items).Text, StringComparison.Ordinal);
         Assert.Equal(1, unitOfWork.SaveChangesCalls);
     }
 }

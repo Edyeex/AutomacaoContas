@@ -125,7 +125,10 @@ internal sealed class FakeUserAccountRepository : IUserAccountRepository
         DateTimeOffset dueAt,
         CancellationToken cancellationToken = default)
         => Task.FromResult<IReadOnlyList<UserAccount>>(
-            Items.Where(account => account.Status == AccountStatus.Active && account.NextRunAt <= dueAt).ToList());
+            Items.Where(account =>
+                account.Status == AccountStatus.Active &&
+                account.IsScheduleEnabled &&
+                account.NextRunAt <= dueAt).ToList());
 
     public Task<int> CountActiveByUserAsync(Guid userId, CancellationToken cancellationToken = default)
         => Task.FromResult(Items.Count(account => account.UserId == userId && account.Status == AccountStatus.Active));
@@ -200,6 +203,18 @@ internal sealed class FakeNotificationRepository : INotificationRepository
         => Task.FromResult(Items.Count(item => item.UserId == userId && !item.IsRead));
 }
 
+internal sealed class FakeMonthlyScheduleCalculator : IMonthlyScheduleCalculator
+{
+    public DateTimeOffset Next { get; set; } = TestData.Now.AddMonths(1);
+
+    public DateTimeOffset CalculateNext(
+        DateTimeOffset now,
+        DateTimeOffset? lastRunAt,
+        int? dayOfMonth,
+        TimeOnly scheduleTime)
+        => Next;
+}
+
 internal static class TestData
 {
     public static readonly DateTimeOffset Now = new(2026, 6, 18, 15, 0, 0, TimeSpan.Zero);
@@ -229,8 +244,7 @@ internal static class TestData
             "portal.login",
             "protected::secret",
             "CUSTOMER-01",
-            Now,
-            Now.AddDays(5));
+            Now);
 
     public static Bill Bill(Guid userId, Guid accountId, Guid operatorId)
         => AutoDownload.Domain.Entities.Bill.Create(
