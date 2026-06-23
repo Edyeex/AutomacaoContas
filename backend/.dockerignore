@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/App_Data/
+.git/
+.github/
+.vs/
+.vscode/
+.idea/
+tests/
+*.user
+*.suo
+*.log
+README.md

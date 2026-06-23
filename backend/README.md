@@ -32,6 +32,43 @@ Cors__AllowedOrigins__0
 
 Não coloque valores reais em `appsettings.json` nem faça commit de arquivos `.env`.
 
+## Docker e Render
+
+O backend possui um `Dockerfile` multi-stage na raiz desta pasta. A imagem publica a API com .NET 10, instala Chromium e ChromeDriver para as automações Selenium e executa o processo como usuário sem privilégios.
+
+No Render, crie um **Web Service** com estas configurações:
+
+```text
+Root Directory: backend
+Runtime: Docker
+Dockerfile Path: ./Dockerfile
+Health Check Path: /api/health
+```
+
+Configure as variáveis abaixo usando exatamente os dois sublinhados (`__`):
+
+```text
+ConnectionStrings__AutoDownload=CONNECTION_STRING_DO_NEON
+Security__AccessToken__SigningKey=CHAVE_ALEATORIA_COM_PELO_MENOS_32_CARACTERES
+Cors__AllowedOrigins__0=https://SEU-FRONTEND.vercel.app
+Database__ApplyMigrationsOnStartup=true
+```
+
+O container escuta a porta `10000`, executa Vero/RMS em modo headless e grava PDFs e chaves locais em `/app/App_Data`. O sistema funciona sem disco persistente, mas os PDFs deixam de existir quando o Render recria o container. Para conservar arquivos e chaves de criptografia entre deploys, monte um Persistent Disk nesse caminho ou migre os arquivos para um object storage.
+
+Para construir a imagem em uma máquina com Docker:
+
+```powershell
+docker build -t autodownload-api .\backend
+docker run --rm -p 10000:10000 --env-file .\backend\.env autodownload-api
+```
+
+No frontend publicado na Vercel, a variável correta é:
+
+```text
+NEXT_PUBLIC_API_URL=https://URL-DO-BACKEND.onrender.com/api
+```
+
 ## PostgreSQL Local Sem Docker
 
 Instale o PostgreSQL direto no Windows. Pelo terminal do VS Code, você pode instalar com:

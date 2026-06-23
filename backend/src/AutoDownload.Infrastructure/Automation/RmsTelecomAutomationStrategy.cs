@@ -141,13 +141,22 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         chromeOptions.AddArgument("--start-maximized");
         chromeOptions.AddExcludedArgument("enable-automation");
 
+        if (OperatingSystem.IsLinux())
+        {
+            chromeOptions.BinaryLocation = "/usr/bin/chromium";
+            chromeOptions.AddArgument("--no-sandbox");
+            chromeOptions.AddArgument("--disable-dev-shm-usage");
+        }
+
         if (options.Headless)
         {
             chromeOptions.AddArgument("--headless=new");
             chromeOptions.AddArgument("--window-size=1366,900");
         }
 
-        var service = ChromeDriverService.CreateDefaultService();
+        var service = OperatingSystem.IsLinux()
+            ? ChromeDriverService.CreateDefaultService("/usr/bin")
+            : ChromeDriverService.CreateDefaultService();
         service.HideCommandPromptWindow = true;
 
         var driver = new ChromeDriver(service, chromeOptions);
