@@ -132,20 +132,28 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
     private IWebDriver CreateDriver(string downloadDirectory)
     {
         var chromeOptions = new ChromeOptions();
+        var profileDirectory = Path.Combine(downloadDirectory, "chrome-profile");
+        Directory.CreateDirectory(profileDirectory);
+
         chromeOptions.AddUserProfilePreference("download.default_directory", downloadDirectory);
         chromeOptions.AddUserProfilePreference("download.prompt_for_download", false);
         chromeOptions.AddUserProfilePreference("download.directory_upgrade", true);
         chromeOptions.AddUserProfilePreference("plugins.always_open_pdf_externally", true);
         chromeOptions.AddArgument("--disable-blink-features=AutomationControlled");
+        chromeOptions.AddArgument("--disable-extensions");
+        chromeOptions.AddArgument("--disable-gpu");
         chromeOptions.AddArgument("--disable-popup-blocking");
+        chromeOptions.AddArgument("--remote-debugging-port=0");
         chromeOptions.AddArgument("--start-maximized");
+        chromeOptions.AddArgument($"--user-data-dir={profileDirectory}");
         chromeOptions.AddExcludedArgument("enable-automation");
 
         if (OperatingSystem.IsLinux())
         {
-            chromeOptions.BinaryLocation = "/usr/bin/chromium";
+            chromeOptions.BinaryLocation = ResolveLinuxChromiumBinary();
             chromeOptions.AddArgument("--no-sandbox");
             chromeOptions.AddArgument("--disable-dev-shm-usage");
+            chromeOptions.AddArgument("--disable-setuid-sandbox");
         }
 
         if (options.Headless)
@@ -154,10 +162,9 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
             chromeOptions.AddArgument("--window-size=1366,900");
         }
 
-        var service = OperatingSystem.IsLinux()
-            ? ChromeDriverService.CreateDefaultService("/usr/bin")
-            : ChromeDriverService.CreateDefaultService();
+        var service = CreateDriverService();
         service.HideCommandPromptWindow = true;
+        service.EnableVerboseLogging = true;
 
         var driver = new ChromeDriver(service, chromeOptions);
         ((IJavaScriptExecutor)driver)
@@ -165,6 +172,37 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
 
         return driver;
     }
+
+    private static ChromeDriverService CreateDriverService()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return ChromeDriverService.CreateDefaultService();
+        }
+
+        var driverPath = ResolveLinuxChromeDriverBinary();
+        return ChromeDriverService.CreateDefaultService(
+            Path.GetDirectoryName(driverPath),
+            Path.GetFileName(driverPath));
+    }
+
+    private static string ResolveLinuxChromiumBinary()
+        => ResolveExistingFile(
+            "Chromium binary",
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser",
+            "/usr/bin/google-chrome");
+
+    private static string ResolveLinuxChromeDriverBinary()
+        => ResolveExistingFile(
+            "ChromeDriver binary",
+            "/usr/bin/chromedriver",
+            "/usr/local/bin/chromedriver",
+            "/usr/lib/chromium/chromedriver");
+
+    private static string ResolveExistingFile(string description, params string[] candidates)
+        => candidates.FirstOrDefault(File.Exists)
+           ?? throw new WebDriverException($"{description} was not found in the container.");
 
     private void Login(
         IWebDriver driver,

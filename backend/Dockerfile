@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-bookworm-slim AS build
 WORKDIR /src
 
 COPY Directory.Build.props ./
@@ -19,7 +19,7 @@ RUN dotnet publish src/AutoDownload.Api/AutoDownload.Api.csproj \
     --output /app/publish \
     /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-bookworm-slim AS runtime
 
 USER root
 RUN apt-get update \
@@ -28,7 +28,16 @@ RUN apt-get update \
         chromium \
         chromium-driver \
         fonts-liberation \
+        libasound2 \
+        libatk-bridge2.0-0 \
+        libgbm1 \
+        libgtk-3-0 \
+        libnss3 \
+        libxss1 \
+        xdg-utils \
     && rm -rf /var/lib/apt/lists/*
+
+RUN chromium --version && chromedriver --version
 
 WORKDIR /app
 
