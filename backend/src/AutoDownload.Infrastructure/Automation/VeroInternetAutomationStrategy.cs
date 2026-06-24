@@ -6,6 +6,8 @@ using Microsoft.Extensions.Options;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
+using System.Globalization;
+using System.Text;
 
 namespace AutoDownload.Infrastructure.Automation;
 
@@ -228,7 +230,19 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
         Click(wait, By.CssSelector("button[type='submit']"), cancellationToken);
 
         var passwordInput = wait.Until(current =>
-            current.FindElement(By.CssSelector("input[type='password']")));
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var body = SafeBodyText(current);
+            if (LooksLikeLoginError(body))
+            {
+                throw new PortalLoginFailedException("Portal Vero recusou o documento informado. Confira CPF/CNPJ ou login do portal.");
+            }
+
+            return current
+                .FindElements(By.CssSelector("input[type='password']"))
+                .FirstOrDefault(element => element.Displayed && element.Enabled);
+        });
         passwordInput.Clear();
         passwordInput.SendKeys(credential.Password);
 
@@ -287,9 +301,11 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var element = wait.Until(current =>
-            current.FindElement(By.XPath(
-                "//*[contains(normalize-space(.), '2ª via da fatura') or contains(normalize-space(.), '2a via da fatura')]")));
+        var element = wait.Until(current => FindVisibleElementByText(
+            current,
+            ["2", "via", "fatura"],
+            ["2a", "via", "fatura"],
+            ["segunda", "via", "fatura"]));
         ScrollIntoView(driver, element);
         ClickElement(driver, element);
     }
@@ -301,8 +317,11 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var element = wait.Until(current =>
-            current.FindElement(By.XPath("//*[contains(normalize-space(.), 'Visualizar e Imprimir')]")));
+        var element = wait.Until(current => FindVisibleElementByText(
+            current,
+            ["visualizar", "imprimir"],
+            ["ver", "imprimir"],
+            ["imprimir"]));
         ScrollIntoView(driver, element);
         ClickElement(driver, element);
     }
@@ -325,7 +344,7 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
         {
             element.Click();
         }
-        catch (ElementClickInterceptedException)
+        catch (WebDriverException)
         {
             ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", element);
         }
@@ -347,10 +366,91 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
     }
 
     private static bool LooksLikeLoginError(string text)
-        => ContainsAny(text, "senha invalida", "senha incorreta", "login invalido", "cpf invalido", "documento invalido", "credenciais", "usuario nao encontrado");
+        => ContainsAny(text, "senha invalida", "senha incorreta", "login invalido", "cpf/cnpj invalido", "cpf invalido", "documento invalido", "credenciais", "usuario nao encontrado");
 
     private static bool LooksLikeHumanVerification(string text)
         => ContainsAny(text, "captcha", "recaptcha", "verificacao", "validacao", "codigo de seguranca", "sms", "e-mail");
+
+    private static IWebElement? FindVisibleElementByText(IWebDriver driver, params string[][] tokenSets)
+    {
+        foreach (var tokenSet in tokenSets)
+        {
+            var tokens = tokenSet.Select(NormalizeForSearch).Where(token => token.Length > 0).ToArray();
+            var candidates = new List<(IWebElement Element, int Area)>();
+
+            foreach (var element in driver.FindElements(By.XPath("//*[not(self::script) and not(self::style)]")))
+            {
+                try
+                {
+                    if (!element.Displayed)
+                    {
+                        continue;
+                    }
+
+                    var text = NormalizeForSearch(element.Text);
+                    if (tokens.All(token => text.Contains(token, StringComparison.Ordinal)))
+                    {
+                        var clickableElement = FindClickableAncestor(driver, element);
+                        candidates.Add((clickableElement, Math.Max(1, clickableElement.Size.Width * clickableElement.Size.Height)));
+                    }
+                }
+                catch (WebDriverException)
+                {
+                }
+            }
+
+            var match = candidates.OrderBy(candidate => candidate.Area).FirstOrDefault();
+            if (match.Element is not null)
+            {
+                return match.Element;
+            }
+        }
+
+        return null;
+    }
+
+    private static IWebElement FindClickableAncestor(IWebDriver driver, IWebElement element)
+    {
+        try
+        {
+            return ((IJavaScriptExecutor)driver).ExecuteScript(
+                """
+                const element = arguments[0];
+
+                function isClickable(node) {
+                    if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+                        return false;
+                    }
+
+                    const tagName = node.tagName.toLowerCase();
+                    const role = node.getAttribute('role');
+                    const cursor = window.getComputedStyle(node).cursor;
+
+                    return tagName === 'button'
+                        || tagName === 'a'
+                        || role === 'button'
+                        || node.hasAttribute('onclick')
+                        || cursor === 'pointer';
+                }
+
+                let current = element;
+                while (current && current !== document.body) {
+                    if (isClickable(current)) {
+                        return current;
+                    }
+
+                    current = current.parentElement;
+                }
+
+                return element;
+                """,
+                element) as IWebElement ?? element;
+        }
+        catch (WebDriverException)
+        {
+            return element;
+        }
+    }
 
     private static bool ContainsAny(string? text, params string[] needles)
     {
@@ -359,13 +459,24 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
             return false;
         }
 
-        var normalized = text
-            .Normalize(System.Text.NormalizationForm.FormD)
-            .Where(ch => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) != System.Globalization.UnicodeCategory.NonSpacingMark)
-            .ToArray();
-        var haystack = new string(normalized).Normalize(System.Text.NormalizationForm.FormC).ToLowerInvariant();
+        var haystack = NormalizeForSearch(text);
 
-        return needles.Any(needle => haystack.Contains(needle, StringComparison.OrdinalIgnoreCase));
+        return needles.Any(needle => haystack.Contains(NormalizeForSearch(needle), StringComparison.Ordinal));
+    }
+
+    private static string NormalizeForSearch(string? text)
+    {
+        var normalized = (text ?? string.Empty)
+            .Normalize(NormalizationForm.FormKD)
+            .Where(ch => CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark)
+            .ToArray();
+
+        return string.Join(
+            ' ',
+            new string(normalized)
+                .Normalize(NormalizationForm.FormC)
+                .ToLowerInvariant()
+                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
     }
 
     private static string WaitForPdfDownload(
