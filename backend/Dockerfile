@@ -27,6 +27,7 @@ RUN apt-get update \
         ca-certificates \
         curl \
         gnupg \
+        unzip \
     && install -m 0755 -d /etc/apt/keyrings \
     && curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
         | gpg --dearmor -o /etc/apt/keyrings/google-linux-signing-keyring.gpg \
@@ -38,9 +39,18 @@ RUN apt-get update \
         fonts-liberation \
         google-chrome-stable \
         xdg-utils \
+    && chrome_major="$(google-chrome --product-version | cut -d '.' -f 1)" \
+    && chromedriver_version="$(curl -fsSL "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${chrome_major}")" \
+    && curl -fsSL \
+        -o /tmp/chromedriver.zip \
+        "https://storage.googleapis.com/chrome-for-testing-public/${chromedriver_version}/linux64/chromedriver-linux64.zip" \
+    && unzip -q /tmp/chromedriver.zip -d /tmp/chromedriver \
+    && mv /tmp/chromedriver/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver \
+    && chmod +x /usr/local/bin/chromedriver \
+    && rm -rf /tmp/chromedriver /tmp/chromedriver.zip \
     && rm -rf /var/lib/apt/lists/*
 
-RUN google-chrome --version
+RUN google-chrome --version && chromedriver --version
 
 WORKDIR /app
 

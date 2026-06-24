@@ -95,10 +95,15 @@ public sealed class AutomationOrchestrator
         {
             throw;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            result = new AutomationDownloadResult(AutomationRunStatus.ConnectionError, "Falha inesperada ao executar a automacao.", null);
+            result = new AutomationDownloadResult(
+                AutomationRunStatus.ConnectionError,
+                BuildUnexpectedFailureMessage(ex),
+                null);
         }
+
+        result = NormalizeResult(result);
 
         var finishedAt = clock.Now;
         Bill? createdBill = null;
@@ -172,9 +177,42 @@ public sealed class AutomationOrchestrator
             return $"Boleto {operatorName} baixado com sucesso.";
         }
 
-        return string.IsNullOrWhiteSpace(result.Message)
+        var notificationText = string.IsNullOrWhiteSpace(result.Message)
             ? $"Falha ao executar automacao para {operatorName}."
             : $"{operatorName}: {result.Message}";
+
+        return LimitText(notificationText, 300);
+    }
+
+    private static string BuildUnexpectedFailureMessage(Exception exception)
+    {
+        var baseException = exception.GetBaseException();
+        var message = string.IsNullOrWhiteSpace(baseException.Message)
+            ? exception.Message
+            : baseException.Message;
+
+        return LimitText(
+            $"Falha inesperada ao executar a automacao: {NormalizeMessage(message)}",
+            500);
+    }
+
+    private static AutomationDownloadResult NormalizeResult(AutomationDownloadResult result)
+        => result with
+        {
+            Message = LimitText(NormalizeMessage(result.Message), 500)
+        };
+
+    private static string NormalizeMessage(string message)
+        => string.Join(' ', message.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
+    private static string LimitText(string text, int maxLength)
+    {
+        if (text.Length <= maxLength)
+        {
+            return text;
+        }
+
+        return text[..Math.Max(0, maxLength - 3)] + "...";
     }
 
     private static string BuildNotificationText(string operatorName, AutomationDownloadResult result)

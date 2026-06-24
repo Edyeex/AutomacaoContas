@@ -55,7 +55,14 @@ internal sealed class DataProtectionCredentialProtector : ICredentialProtector
     {
         if (!protectedText.StartsWith(AesPrefix, StringComparison.Ordinal))
         {
-            return protector.Unprotect(protectedText);
+            try
+            {
+                return protector.Unprotect(protectedText);
+            }
+            catch (Exception ex) when (ex is not CryptographicException)
+            {
+                throw new CryptographicException("Stored portal credential could not be read.", ex);
+            }
         }
 
         if (encryptionKey is null)
@@ -63,7 +70,16 @@ internal sealed class DataProtectionCredentialProtector : ICredentialProtector
             throw new CryptographicException("Security:CredentialEncryption:Key is required to read portal credentials.");
         }
 
-        var payload = Convert.FromBase64String(protectedText[AesPrefix.Length..]);
+        byte[] payload;
+        try
+        {
+            payload = Convert.FromBase64String(protectedText[AesPrefix.Length..]);
+        }
+        catch (FormatException ex)
+        {
+            throw new CryptographicException("Stored portal credential payload is invalid.", ex);
+        }
+
         if (payload.Length <= NonceSize + TagSize)
         {
             throw new CryptographicException("Stored portal credential payload is invalid.");
@@ -75,7 +91,14 @@ internal sealed class DataProtectionCredentialProtector : ICredentialProtector
         var plainBytes = new byte[cipherBytes.Length];
 
         using var aes = new AesGcm(encryptionKey, TagSize);
-        aes.Decrypt(nonce, cipherBytes, tag, plainBytes);
+        try
+        {
+            aes.Decrypt(nonce, cipherBytes, tag, plainBytes);
+        }
+        catch (AuthenticationTagMismatchException ex)
+        {
+            throw new CryptographicException("Stored portal credential could not be read.", ex);
+        }
 
         return Encoding.UTF8.GetString(plainBytes);
     }
