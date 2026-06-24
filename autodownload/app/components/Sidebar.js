@@ -100,6 +100,7 @@ export default function Sidebar() {
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(fallbackUnreadCount());
   const [dashboardCounts, setDashboardCounts] = useState(fallbackDashboardCounts());
+  const [pendingHref, setPendingHref] = useState("");
 
   useEffect(() => {
     async function loadUnreadCount() {
@@ -133,6 +134,10 @@ export default function Sidebar() {
     return () => window.removeEventListener(DASHBOARD_COUNTS_CHANGED_EVENT, loadDashboardCounts);
   }, []);
 
+  useEffect(() => {
+    setPendingHref("");
+  }, [pathname]);
+
   function isActive(href) {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
@@ -141,6 +146,12 @@ export default function Sidebar() {
   function handleLogout() {
     clearSession();
     router.push("/");
+  }
+
+  function handleNavigate(href) {
+    if (!isActive(href)) {
+      setPendingHref(href);
+    }
   }
 
   return (
@@ -160,7 +171,9 @@ export default function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`nav-item${isActive(item.href) ? " active" : ""}`}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  onClick={() => handleNavigate(item.href)}
+                  className={`nav-item${isActive(item.href) ? " active" : ""}${pendingHref === item.href ? " is-pending" : ""}`}
                 >
                   {item.icon}
                   {item.label}
