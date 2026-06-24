@@ -59,7 +59,7 @@ export default function BoletosPage() {
       <div className="page-body">
         {(loading || error || pageMessage) && (
           <p style={{ fontSize: 13, color: usingFallback ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
-            {loading ? "Carregando boletos..." : pageMessage || "Nao foi possivel carregar os boletos agora."}
+            {loading ? "Carregando boletos..." : pageMessage || error || "Nao foi possivel carregar os boletos agora."}
           </p>
         )}
 

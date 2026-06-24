@@ -37,7 +37,7 @@ export default function HistoricoPage() {
       <div className="page-body">
         {(loading || error) && (
           <p style={{ fontSize: 13, color: usingFallback ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
-            {loading ? "Carregando historico..." : "Nao foi possivel carregar o historico agora."}
+            {loading ? "Carregando historico..." : error || "Nao foi possivel carregar o historico agora."}
           </p>
         )}
 

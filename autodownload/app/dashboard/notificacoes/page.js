@@ -150,7 +150,7 @@ export default function NotificacoesPage() {
       <div className="page-body">
         {(loading || error || pageMessage) && (
           <p style={{ fontSize: 13, color: error || pageMessage ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
-            {loading ? "Carregando notificacoes..." : pageMessage || "Nao foi possivel carregar as notificacoes agora."}
+            {loading ? "Carregando notificacoes..." : pageMessage || error || "Nao foi possivel carregar as notificacoes agora."}
           </p>
         )}
 

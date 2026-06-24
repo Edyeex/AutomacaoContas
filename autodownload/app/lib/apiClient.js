@@ -3,6 +3,10 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5080/api";
 const AUTH_STORAGE_KEY = "autodownload.auth";
 
+export const AUTH_EXPIRED_EVENT = "autodownload:auth-expired";
+
+let redirectingToLogin = false;
+
 export class ApiError extends Error {
   constructor(message, status, code) {
     super(message);
@@ -28,12 +32,30 @@ export function getSession() {
 
 export function saveSession(auth) {
   if (typeof window === "undefined") return;
+  redirectingToLogin = false;
   window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
 }
 
 export function clearSession() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+function handleExpiredSession() {
+  clearSession();
+
+  if (typeof window === "undefined") return;
+
+  window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
+
+  const publicPaths = ["/", "/cadastro", "/recuperar-senha"];
+  const currentPath = window.location.pathname;
+  const isPublicPath = publicPaths.includes(currentPath);
+
+  if (!isPublicPath && !redirectingToLogin) {
+    redirectingToLogin = true;
+    window.location.replace("/");
+  }
 }
 
 export async function apiRequest(path, options = {}) {
@@ -47,6 +69,7 @@ export async function apiRequest(path, options = {}) {
 
   if (auth) {
     if (!session?.accessToken) {
+      handleExpiredSession();
       throw new ApiError("Sessão expirada. Entre novamente.", 401, "auth.required");
     }
 
@@ -67,6 +90,10 @@ export async function apiRequest(path, options = {}) {
   const payload = contentType.includes("application/json") ? await response.json() : null;
 
   if (!response.ok) {
+    if (auth && response.status === 401) {
+      handleExpiredSession();
+    }
+
     throw new ApiError(
       payload?.detail || payload?.title || "Não foi possível concluir a operação.",
       response.status,
@@ -80,6 +107,7 @@ export async function apiRequest(path, options = {}) {
 export async function apiDownload(path, fallbackFileName = "download.pdf") {
   const session = getSession();
   if (!session?.accessToken) {
+    handleExpiredSession();
     throw new ApiError("Sessão expirada. Entre novamente.", 401, "auth.required");
   }
 
@@ -93,6 +121,11 @@ export async function apiDownload(path, fallbackFileName = "download.pdf") {
   if (!response.ok) {
     const contentType = response.headers.get("content-type") || "";
     const payload = contentType.includes("application/json") ? await response.json() : null;
+
+    if (response.status === 401) {
+      handleExpiredSession();
+    }
+
     throw new ApiError(
       payload?.detail || payload?.title || "Não foi possível baixar o arquivo.",
       response.status,

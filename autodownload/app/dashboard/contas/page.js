@@ -253,7 +253,7 @@ export default function ContasPage() {
       <div className="page-body">
         {(loading || error || pageMessage) && (
           <p style={{ fontSize: 13, color: error || pageMessage ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
-            {loading ? "Carregando contas..." : pageMessage || "Nao foi possivel carregar as contas agora."}
+            {loading ? "Carregando contas..." : pageMessage || error || "Nao foi possivel carregar as contas agora."}
           </p>
         )}
 

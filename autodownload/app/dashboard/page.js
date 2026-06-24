@@ -57,7 +57,7 @@ export default function DashboardPage() {
       <div className="page-body">
         {(loading || error) && (
           <p style={{ fontSize: 13, color: usingFallback ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
-            {loading ? "Carregando dados..." : "Nao foi possivel carregar os dados agora."}
+            {loading ? "Carregando dados..." : error || "Nao foi possivel carregar os dados agora."}
           </p>
         )}
 
