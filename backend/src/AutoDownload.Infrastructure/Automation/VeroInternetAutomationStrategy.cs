@@ -373,6 +373,12 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
 
     private static IWebElement? FindVisibleElementByText(IWebDriver driver, params string[][] tokenSets)
     {
+        var fastMatch = FindVisibleElementByTextWithScript(driver, tokenSets);
+        if (fastMatch is not null)
+        {
+            return fastMatch;
+        }
+
         foreach (var tokenSet in tokenSets)
         {
             var tokens = tokenSet.Select(NormalizeForSearch).Where(token => token.Length > 0).ToArray();
@@ -407,6 +413,120 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
         }
 
         return null;
+    }
+
+    private static IWebElement? FindVisibleElementByTextWithScript(IWebDriver driver, string[][] tokenSets)
+    {
+        try
+        {
+            var normalizedTokenSets = tokenSets
+                .Select(tokenSet => tokenSet.Select(NormalizeForSearch).Where(token => token.Length > 0).ToArray())
+                .Where(tokenSet => tokenSet.Length > 0)
+                .ToArray();
+
+            if (normalizedTokenSets.Length == 0)
+            {
+                return null;
+            }
+
+            return ((IJavaScriptExecutor)driver).ExecuteScript(
+                """
+                const tokenSets = arguments[0];
+
+                function normalize(value) {
+                    return String(value || '')
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .toLowerCase()
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                }
+
+                function isVisible(node) {
+                    if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+                        return false;
+                    }
+
+                    const rect = node.getBoundingClientRect();
+                    const style = window.getComputedStyle(node);
+
+                    return rect.width > 0
+                        && rect.height > 0
+                        && style.display !== 'none'
+                        && style.visibility !== 'hidden'
+                        && style.opacity !== '0';
+                }
+
+                function isClickable(node) {
+                    if (!isVisible(node)) {
+                        return false;
+                    }
+
+                    const tagName = node.tagName.toLowerCase();
+                    const role = node.getAttribute('role');
+                    const cursor = window.getComputedStyle(node).cursor;
+
+                    return tagName === 'button'
+                        || tagName === 'a'
+                        || role === 'button'
+                        || node.hasAttribute('onclick')
+                        || cursor === 'pointer';
+                }
+
+                function clickableAncestor(element) {
+                    let current = element;
+                    while (current && current !== document.body) {
+                        if (isClickable(current)) {
+                            return current;
+                        }
+
+                        current = current.parentElement;
+                    }
+
+                    return element;
+                }
+
+                const elements = Array.from(document.querySelectorAll(
+                    'button, a, [role="button"], [onclick], div, span, p, li'
+                ));
+
+                for (const tokens of tokenSets) {
+                    let best = null;
+                    let bestArea = Number.MAX_SAFE_INTEGER;
+
+                    for (const element of elements) {
+                        if (!isVisible(element)) {
+                            continue;
+                        }
+
+                        const text = normalize(element.innerText || element.textContent);
+                        if (!tokens.every(token => text.includes(token))) {
+                            continue;
+                        }
+
+                        const clickable = clickableAncestor(element);
+                        const rect = clickable.getBoundingClientRect();
+                        const area = Math.max(1, rect.width * rect.height);
+
+                        if (area < bestArea) {
+                            best = clickable;
+                            bestArea = area;
+                        }
+                    }
+
+                    if (best) {
+                        return best;
+                    }
+                }
+
+                return null;
+                """,
+                [normalizedTokenSets]) as IWebElement;
+        }
+        catch (WebDriverException)
+        {
+            return null;
+        }
     }
 
     private static IWebElement FindClickableAncestor(IWebDriver driver, IWebElement element)
