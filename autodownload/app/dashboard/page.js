@@ -1,20 +1,16 @@
 "use client";
 import Link from "next/link";
-import { contas, boletos, historico } from "../lib/mockData";
 import { useApiResource } from "../lib/useApiResource";
 
 const fallbackDashboard = {
-  totalContas: contas.length,
+  totalContas: 0,
   limiteContas: 3,
-  totalBoletos: boletos.length,
-  execucoesSucesso: historico.filter((h) => h.status === "sucesso").length,
-  execucoesFalha: historico.filter((h) => h.status === "falha").length,
-  proximaExecucao: contas
-    .filter((c) => c.agendamentoAtivo)
-    .map((c) => c.proximaExecucao)
-    .find((d) => d && d !== "-"),
-  boletosRecentes: boletos.slice(0, 3),
-  historicoRecente: historico.slice(0, 5),
+  totalBoletos: 0,
+  execucoesSucesso: 0,
+  execucoesFalha: 0,
+  proximaExecucao: null,
+  boletosRecentes: [],
+  historicoRecente: [],
 };
 
 function formatDate(dateStr) {
@@ -61,7 +57,7 @@ export default function DashboardPage() {
       <div className="page-body">
         {(loading || error) && (
           <p style={{ fontSize: 13, color: usingFallback ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
-            {loading ? "Carregando dados..." : "API indisponível; exibindo dados do protótipo."}
+            {loading ? "Carregando dados..." : "Nao foi possivel carregar os dados agora."}
           </p>
         )}
 

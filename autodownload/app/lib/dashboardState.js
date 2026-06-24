@@ -1,13 +1,12 @@
 "use client";
-import { boletos, contas } from "./mockData";
 import { apiRequest } from "./apiClient";
 
 export const DASHBOARD_COUNTS_CHANGED_EVENT = "autodownload:dashboard-counts-changed";
 
 export function fallbackDashboardCounts() {
   return {
-    totalContas: contas.length,
-    totalBoletos: boletos.length,
+    totalContas: 0,
+    totalBoletos: 0,
   };
 }
 

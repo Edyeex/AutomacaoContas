@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { contas, operadoras } from "../../lib/mockData";
 import { apiRequest } from "../../lib/apiClient";
 import { useApiResource } from "../../lib/useApiResource";
 import { publishDashboardCountsChanged } from "../../lib/dashboardState";
@@ -22,9 +21,9 @@ function formatDateTime(d) {
 }
 
 export default function ContasPage() {
-  const { data: apiContas, loading, error, usingFallback, reload } = useApiResource("/accounts", contas);
-  const { data: apiOperadoras } = useApiResource("/operators", operadoras);
-  const [list, setList] = useState(contas);
+  const { data: apiContas, loading, error, usingFallback, reload } = useApiResource("/accounts", []);
+  const { data: apiOperadoras } = useApiResource("/operators", []);
+  const [list, setList] = useState([]);
   const [modal, setModal] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [scheduleItem, setScheduleItem] = useState(null);
@@ -254,7 +253,7 @@ export default function ContasPage() {
       <div className="page-body">
         {(loading || error || pageMessage) && (
           <p style={{ fontSize: 13, color: error || pageMessage ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
-            {loading ? "Carregando contas..." : pageMessage || "API indisponível; exibindo dados do protótipo."}
+            {loading ? "Carregando contas..." : pageMessage || "Nao foi possivel carregar as contas agora."}
           </p>
         )}
 

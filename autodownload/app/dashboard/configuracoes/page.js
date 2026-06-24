@@ -1,16 +1,20 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { currentUser } from "../../lib/mockData";
 import { apiRequest, clearSession, getSession, saveSession } from "../../lib/apiClient";
 import { useApiResource } from "../../lib/useApiResource";
 
+const emptyProfile = {
+  name: "",
+  email: "",
+};
+
 export default function ConfiguracoesPage() {
   const router = useRouter();
-  const { data: profile, usingFallback, reload } = useApiResource("/me", getSession()?.user || currentUser);
+  const { data: profile, usingFallback, reload } = useApiResource("/me", emptyProfile);
   const [form, setForm] = useState({
-    nome: currentUser.name,
-    email: currentUser.email,
+    nome: "",
+    email: "",
   });
   const [senhaForm, setSenhaForm] = useState({
     atual: "",
@@ -23,9 +27,10 @@ export default function ConfiguracoesPage() {
   const [senhaError, setSenhaError] = useState("");
 
   useEffect(() => {
+    const sessionUser = getSession()?.user;
     setForm({
-      nome: profile?.name || currentUser.name,
-      email: profile?.email || currentUser.email,
+      nome: profile?.name || sessionUser?.name || "",
+      email: profile?.email || sessionUser?.email || "",
     });
   }, [profile]);
 

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppBrand from "./AppBrand";
-import { currentUser } from "../lib/mockData";
 import { clearSession, getSession } from "../lib/apiClient";
 import { applyTheme, getStoredTheme, saveTheme } from "../lib/themeState";
 import {
@@ -82,7 +81,7 @@ const accountMenuItems = [
 export default function TopBar() {
   const router = useRouter();
   const menuRef = useRef(null);
-  const [user, setUser] = useState(currentUser);
+  const [user, setUser] = useState(null);
   const [unreadCount, setUnreadCount] = useState(fallbackUnreadCount());
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState("light");
@@ -101,7 +100,7 @@ export default function TopBar() {
       try {
         setUnreadCount(await fetchUnreadCount());
       } catch {
-        setUnreadCount(fallbackUnreadCount());
+        setUnreadCount(0);
       }
     }
 

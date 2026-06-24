@@ -1,11 +1,10 @@
 "use client";
-import { notificacoes } from "./mockData";
 import { apiRequest } from "./apiClient";
 
 export const NOTIFICATIONS_CHANGED_EVENT = "autodownload:notifications-changed";
 
 export function fallbackUnreadCount() {
-  return notificacoes.filter((item) => !item.lida).length;
+  return 0;
 }
 
 export function publishUnreadCount(count) {

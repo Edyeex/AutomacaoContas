@@ -5,6 +5,7 @@ using AutoDownload.Application.Mappings;
 using AutoDownload.Domain.Common;
 using AutoDownload.Domain.Entities;
 using AutoDownload.Domain.Enums;
+using System.Security.Cryptography;
 
 namespace AutoDownload.Application.Services;
 
@@ -82,6 +83,13 @@ public sealed class AutomationOrchestrator
         catch (DomainException ex)
         {
             result = new AutomationDownloadResult(AutomationRunStatus.Failed, ex.Message, null);
+        }
+        catch (CryptographicException)
+        {
+            result = new AutomationDownloadResult(
+                AutomationRunStatus.LoginFailed,
+                "Nao foi possivel ler a senha do portal. Edite a conta, informe a senha novamente e salve.",
+                null);
         }
         catch (OperationCanceledException)
         {

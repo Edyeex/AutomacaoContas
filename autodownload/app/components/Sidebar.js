@@ -106,7 +106,7 @@ export default function Sidebar() {
       try {
         setUnreadCount(await fetchUnreadCount());
       } catch {
-        setUnreadCount(fallbackUnreadCount());
+        setUnreadCount(0);
       }
     }
 
@@ -124,7 +124,7 @@ export default function Sidebar() {
       try {
         setDashboardCounts(await fetchDashboardCounts());
       } catch {
-        setDashboardCounts(fallbackDashboardCounts());
+        setDashboardCounts({ totalContas: 0, totalBoletos: 0 });
       }
     }
 

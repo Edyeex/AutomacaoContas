@@ -27,6 +27,7 @@ As chaves usadas pela API são:
 ```text
 ConnectionStrings__AutoDownload
 Security__AccessToken__SigningKey
+Security__CredentialEncryption__Key
 Cors__AllowedOrigins__0
 ```
 
@@ -50,11 +51,22 @@ Configure as variáveis abaixo usando exatamente os dois sublinhados (`__`):
 ```text
 ConnectionStrings__AutoDownload=CONNECTION_STRING_DO_NEON
 Security__AccessToken__SigningKey=CHAVE_ALEATORIA_COM_PELO_MENOS_32_CARACTERES
+Security__CredentialEncryption__Key=CHAVE_BASE64_COM_32_BYTES
 Cors__AllowedOrigins__0=https://SEU-FRONTEND.vercel.app
 Database__ApplyMigrationsOnStartup=true
 ```
 
-O container escuta a porta `10000`, executa Vero/RMS em modo headless e grava PDFs e chaves locais em `/app/App_Data`. O sistema funciona sem disco persistente, mas os PDFs deixam de existir quando o Render recria o container. Para conservar arquivos e chaves de criptografia entre deploys, monte um Persistent Disk nesse caminho ou migre os arquivos para um object storage.
+Gere `Security__CredentialEncryption__Key` com:
+
+```powershell
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+[Convert]::ToBase64String($bytes)
+```
+
+Essa chave protege as senhas dos portais Vero/RMS no banco. Se ela mudar depois que contas forem cadastradas, edite cada conta, informe a senha novamente e salve.
+
+O container escuta a porta `10000`, executa Vero/RMS em modo headless e grava PDFs locais em `/app/App_Data`. O sistema funciona sem disco persistente, mas os PDFs deixam de existir quando o Render recria o container. Para conservar arquivos entre deploys, monte um Persistent Disk nesse caminho ou migre os arquivos para um object storage.
 
 Para construir a imagem em uma máquina com Docker:
 

@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { notificacoes as initialNotificacoes } from "../../lib/mockData";
 import { apiRequest } from "../../lib/apiClient";
 import { useApiResource } from "../../lib/useApiResource";
 import { publishUnreadCount } from "../../lib/notificationState";
+
+const initialNotificacoes = [];
 
 function timeAgo(dateStr) {
   const now = new Date();
@@ -149,7 +150,7 @@ export default function NotificacoesPage() {
       <div className="page-body">
         {(loading || error || pageMessage) && (
           <p style={{ fontSize: 13, color: error || pageMessage ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
-            {loading ? "Carregando notificações..." : pageMessage || "API indisponível; exibindo dados do protótipo."}
+            {loading ? "Carregando notificacoes..." : pageMessage || "Nao foi possivel carregar as notificacoes agora."}
           </p>
         )}
 

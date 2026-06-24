@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { boletos } from "../../lib/mockData";
 import { useApiResource } from "../../lib/useApiResource";
 import { apiDownload } from "../../lib/apiClient";
 
@@ -25,7 +24,7 @@ function formatCurrency(val) {
 }
 
 export default function BoletosPage() {
-  const { data, loading, error, usingFallback } = useApiResource("/bills", boletos);
+  const { data, loading, error, usingFallback } = useApiResource("/bills", []);
   const [filter, setFilter] = useState("todos");
   const [search, setSearch] = useState("");
   const [pageMessage, setPageMessage] = useState("");
@@ -60,7 +59,7 @@ export default function BoletosPage() {
       <div className="page-body">
         {(loading || error || pageMessage) && (
           <p style={{ fontSize: 13, color: usingFallback ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
-            {loading ? "Carregando boletos..." : pageMessage || "API indisponível; exibindo dados do protótipo."}
+            {loading ? "Carregando boletos..." : pageMessage || "Nao foi possivel carregar os boletos agora."}
           </p>
         )}
 

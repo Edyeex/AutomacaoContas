@@ -15,6 +15,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AccessTokenOptions>(configuration.GetSection("Security:AccessToken"));
+        services.Configure<CredentialEncryptionOptions>(configuration.GetSection("Security:CredentialEncryption"));
         services.Configure<DemoAutomationOptions>(configuration.GetSection("Automation:Demo"));
         services.Configure<VeroInternetAutomationOptions>(configuration.GetSection("Automation:VeroInternet"));
         services.Configure<RmsTelecomAutomationOptions>(configuration.GetSection("Automation:RmsTelecom"));
