@@ -27,14 +27,6 @@ RUN apt-get update \
         ca-certificates \
         curl \
         gnupg \
-        fonts-liberation \
-        libasound2 \
-        libatk-bridge2.0-0 \
-        libgbm1 \
-        libgtk-3-0 \
-        libnss3 \
-        libxss1 \
-        xdg-utils \
     && install -m 0755 -d /etc/apt/keyrings \
     && curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
         | gpg --dearmor -o /etc/apt/keyrings/google-linux-signing-keyring.gpg \
@@ -42,7 +34,10 @@ RUN apt-get update \
     && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-linux-signing-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
         > /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
-    && apt-get install --yes --no-install-recommends google-chrome-stable \
+    && apt-get install --yes --no-install-recommends \
+        fonts-liberation \
+        google-chrome-stable \
+        xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
 RUN google-chrome --version
