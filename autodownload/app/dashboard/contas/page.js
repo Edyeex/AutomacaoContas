@@ -31,11 +31,26 @@ export default function ContasPage() {
   const [scheduleForm, setScheduleForm] = useState({ enabled: true, mode: "day", day: "1", time: "09:00" });
   const [formError, setFormError] = useState("");
   const [pageMessage, setPageMessage] = useState("");
+  const [runningAccountId, setRunningAccountId] = useState(null);
+  const [runningSeconds, setRunningSeconds] = useState(0);
   const accountCount = list.length;
 
   useEffect(() => {
     setList(apiContas || []);
   }, [apiContas]);
+
+  useEffect(() => {
+    if (!runningAccountId) {
+      return undefined;
+    }
+
+    setRunningSeconds(0);
+    const timer = window.setInterval(() => {
+      setRunningSeconds((current) => current + 1);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [runningAccountId]);
 
   function openAdd() {
     if (accountCount >= 3) return;
@@ -212,6 +227,10 @@ export default function ContasPage() {
   }
 
   async function handleRun(id) {
+    if (runningAccountId) {
+      return;
+    }
+
     setPageMessage("");
     if (usingFallback) {
       setPageMessage("API indisponível; execução manual disponível quando o backend estiver rodando.");
@@ -219,14 +238,24 @@ export default function ContasPage() {
     }
 
     try {
+      setRunningAccountId(id);
       await apiRequest(`/accounts/${id}/run`, { method: "POST" });
       await reload();
       publishDashboardCountsChanged();
       await refreshUnreadCount();
-      setPageMessage("Automação executada.");
+      setPageMessage("Automação concluída. Confira boletos, histórico e notificações.");
     } catch (err) {
       setPageMessage(err.message || "Não foi possível executar a automação.");
+    } finally {
+      setRunningAccountId(null);
     }
+  }
+
+  function formatElapsed(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
   }
 
   async function refreshUnreadCount() {
@@ -257,6 +286,16 @@ export default function ContasPage() {
           </p>
         )}
 
+        {runningAccountId && (
+          <div className="automation-run-alert" role="status" aria-live="polite">
+            <span className="automation-spinner" aria-hidden="true" />
+            <div>
+              <strong>Executando automação no servidor</strong>
+              <span>Aguarde. Tempo decorrido: {formatElapsed(runningSeconds)}</span>
+            </div>
+          </div>
+        )}
+
         {list.length === 0 ? (
           <div className="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -271,7 +310,7 @@ export default function ContasPage() {
         ) : (
           <div className="accounts-grid">
             {list.map((conta) => (
-              <div key={conta.id} className="account-card">
+              <div key={conta.id} className={`account-card ${runningAccountId === conta.id ? "is-running" : ""}`}>
                 <div className="account-card-header">
                   <div className="account-card-title">
                     <div className="account-icon">{conta.icon}</div>
@@ -281,20 +320,30 @@ export default function ContasPage() {
                     </div>
                   </div>
                   <div className="account-card-actions">
-                    <button className="btn btn-secondary btn-sm" onClick={() => handleRun(conta.id)}>
-                      Executar
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => handleRun(conta.id)}
+                      disabled={Boolean(runningAccountId)}
+                    >
+                      {runningAccountId === conta.id ? "Executando..." : "Executar"}
                     </button>
-                    <button className="btn btn-secondary btn-sm" onClick={() => openEdit(conta)}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => openEdit(conta)} disabled={Boolean(runningAccountId)}>
                       Editar
                     </button>
-                    <button className="btn btn-secondary btn-sm" onClick={() => openSchedule(conta)}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => openSchedule(conta)} disabled={Boolean(runningAccountId)}>
                       Agendar
                     </button>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleRemove(conta.id)}>
+                    <button className="btn btn-danger btn-sm" onClick={() => handleRemove(conta.id)} disabled={Boolean(runningAccountId)}>
                       Remover
                     </button>
                   </div>
                 </div>
+                {runningAccountId === conta.id && (
+                  <div className="account-running-state">
+                    <span className="automation-spinner automation-spinner-sm" aria-hidden="true" />
+                    <span>Automação em andamento</span>
+                  </div>
+                )}
                 <div className="account-detail">
                   <span className="account-detail-label">Login no portal</span>
                   <span className="account-detail-value">{conta.loginPortal}</span>
