@@ -58,6 +58,9 @@ builder.Services.AddScoped<HistoryService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<AutomationOrchestrator>();
+builder.Services.AddSingleton(
+    builder.Configuration.GetSection("Automation:Execution").Get<AutomationExecutionOptions>()
+    ?? new AutomationExecutionOptions());
 
 var app = builder.Build();
 
@@ -160,9 +163,8 @@ secure.MapDelete("/accounts/{accountId:guid}", async (
 secure.MapPost("/accounts/{accountId:guid}/run", async (
         Guid accountId,
         HttpContext context,
-        AutomationOrchestrator orchestrator,
-        CancellationToken cancellationToken)
-    => (await orchestrator.RunAccountAsync(context.User.GetRequiredUserId(), accountId, cancellationToken)).ToHttpResult());
+        AutomationOrchestrator orchestrator)
+    => (await orchestrator.RunAccountAsync(context.User.GetRequiredUserId(), accountId, CancellationToken.None)).ToHttpResult());
 
 secure.MapGet("/bills", async (HttpContext context, BillService service, CancellationToken cancellationToken)
     => (await service.ListAsync(context.User.GetRequiredUserId(), cancellationToken)).ToHttpResult());

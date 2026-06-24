@@ -5,6 +5,9 @@ import { useApiResource } from "../../lib/useApiResource";
 import { publishDashboardCountsChanged } from "../../lib/dashboardState";
 import { fetchUnreadCount, publishUnreadCount } from "../../lib/notificationState";
 
+const AUTOMATION_RUN_TIMEOUT_MS = 210000;
+const AUTOMATION_SLOW_NOTICE_SECONDS = 45;
+
 function formatDate(d) {
   return d ? new Date(d).toLocaleDateString("pt-BR") : "-";
 }
@@ -31,6 +34,7 @@ export default function ContasPage() {
   const [scheduleForm, setScheduleForm] = useState({ enabled: true, mode: "day", day: "1", time: "09:00" });
   const [formError, setFormError] = useState("");
   const [pageMessage, setPageMessage] = useState("");
+  const [pageMessageType, setPageMessageType] = useState("info");
   const [runningAccountId, setRunningAccountId] = useState(null);
   const [runningSeconds, setRunningSeconds] = useState(0);
   const accountCount = list.length;
@@ -54,6 +58,7 @@ export default function ContasPage() {
 
   function openAdd() {
     if (accountCount >= 3) return;
+    clearPageMessage();
     setForm({ operadoraId: "", login: "", senha: "", unidade: "" });
     setFormError("");
     setEditItem(null);
@@ -61,6 +66,7 @@ export default function ContasPage() {
   }
 
   function openEdit(conta) {
+    clearPageMessage();
     setForm({
       operadoraId: String(conta.operadoraId),
       login: conta.loginPortal,
@@ -73,6 +79,7 @@ export default function ContasPage() {
   }
 
   function openSchedule(conta) {
+    clearPageMessage();
     setScheduleItem(conta);
     setScheduleForm({
       enabled: conta.agendamentoAtivo ?? true,
@@ -100,6 +107,16 @@ export default function ContasPage() {
 
   function updateSchedule(field, value) {
     setScheduleForm((prev) => ({ ...prev, [field]: value, enabled: true }));
+  }
+
+  function showPageMessage(message, type = "warning") {
+    setPageMessage(message);
+    setPageMessageType(type);
+  }
+
+  function clearPageMessage() {
+    setPageMessage("");
+    setPageMessageType("info");
   }
 
   async function handleSave(e) {
@@ -176,7 +193,7 @@ export default function ContasPage() {
       await reload();
       publishDashboardCountsChanged();
       await refreshUnreadCount();
-      setPageMessage(body.enabled ? "Agendamento mensal ativado." : "Agendamento mensal desativado.");
+      showPageMessage(body.enabled ? "Agendamento mensal ativado." : "Agendamento mensal desativado.", "success");
       closeSchedule();
     } catch (err) {
       setFormError(err.message || "Não foi possível salvar o agendamento.");
@@ -210,7 +227,7 @@ export default function ContasPage() {
   }
 
   async function handleRemove(id) {
-    setPageMessage("");
+    clearPageMessage();
     if (usingFallback) {
       setList((prev) => prev.filter((c) => c.id !== id));
       return;
@@ -222,7 +239,7 @@ export default function ContasPage() {
       publishDashboardCountsChanged();
       await refreshUnreadCount();
     } catch (err) {
-      setPageMessage(err.message || "Não foi possível remover a conta.");
+      showPageMessage(err.message || "Não foi possível remover a conta.");
     }
   }
 
@@ -231,24 +248,42 @@ export default function ContasPage() {
       return;
     }
 
-    setPageMessage("");
+    clearPageMessage();
     if (usingFallback) {
-      setPageMessage("API indisponível; execução manual disponível quando o backend estiver rodando.");
+      showPageMessage("API indisponível; execução manual disponível quando o backend estiver rodando.");
       return;
     }
 
     try {
       setRunningAccountId(id);
-      await apiRequest(`/accounts/${id}/run`, { method: "POST" });
-      await reload();
-      publishDashboardCountsChanged();
-      await refreshUnreadCount();
-      setPageMessage("Automação concluída. Confira boletos, histórico e notificações.");
+      const run = await apiRequest(`/accounts/${id}/run`, {
+        method: "POST",
+        timeoutMs: AUTOMATION_RUN_TIMEOUT_MS,
+      });
+
+      showPageMessage(buildRunMessage(run), run?.status === "sucesso" ? "success" : "warning");
     } catch (err) {
-      setPageMessage(err.message || "Não foi possível executar a automação.");
+      const timeoutMessage = err?.code === "request.timeout"
+        ? "A automação demorou mais do que o esperado. O servidor pode continuar finalizando a tentativa; confira Histórico e Notificações em instantes."
+        : err?.message || "Não foi possível executar a automação.";
+
+      showPageMessage(timeoutMessage);
     } finally {
+      await refreshAfterRun();
       setRunningAccountId(null);
     }
+  }
+
+  function buildRunMessage(run) {
+    if (run?.status === "sucesso") {
+      return "Automação concluída e boleto registrado. Confira Boletos, Histórico e Notificações.";
+    }
+
+    if (run?.status === "indisponivel") {
+      return run.mensagem || "A automação terminou, mas não encontrou boleto disponível para pagamento.";
+    }
+
+    return run?.mensagem || "A automação terminou com falha. Confira Notificações para mais detalhes.";
   }
 
   function formatElapsed(seconds) {
@@ -263,6 +298,32 @@ export default function ContasPage() {
       publishUnreadCount(await fetchUnreadCount());
     } catch {
     }
+  }
+
+  async function refreshAfterRun() {
+    try {
+      await reload();
+      publishDashboardCountsChanged();
+      await refreshUnreadCount();
+    } catch {
+    }
+  }
+
+  function runningHint() {
+    if (runningSeconds >= AUTOMATION_SLOW_NOTICE_SECONDS) {
+      return "Ainda em execução. No site hospedado a automação roda no servidor em modo oculto e pode demorar mais.";
+    }
+
+    return `Aguarde. Tempo decorrido: ${formatElapsed(runningSeconds)}`;
+  }
+
+  function pageMessageColor() {
+    if (error) return "var(--warning)";
+    if (pageMessageType === "success") return "var(--success)";
+    if (pageMessageType === "danger") return "var(--danger)";
+    if (pageMessageType === "info") return "var(--text-muted)";
+
+    return "var(--warning)";
   }
 
   return (
@@ -281,7 +342,7 @@ export default function ContasPage() {
 
       <div className="page-body">
         {(loading || error || pageMessage) && (
-          <p style={{ fontSize: 13, color: error || pageMessage ? "var(--warning)" : "var(--text-muted)", marginBottom: 12 }}>
+          <p style={{ fontSize: 13, color: pageMessageColor(), marginBottom: 12 }}>
             {loading ? "Carregando contas..." : pageMessage || error || "Nao foi possivel carregar as contas agora."}
           </p>
         )}
@@ -291,7 +352,7 @@ export default function ContasPage() {
             <span className="automation-spinner" aria-hidden="true" />
             <div>
               <strong>Executando automação no servidor</strong>
-              <span>Aguarde. Tempo decorrido: {formatElapsed(runningSeconds)}</span>
+              <span>{runningHint()}</span>
             </div>
           </div>
         )}

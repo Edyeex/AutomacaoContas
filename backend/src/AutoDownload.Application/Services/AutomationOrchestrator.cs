@@ -20,6 +20,7 @@ public sealed class AutomationOrchestrator
     private readonly ICredentialProtector credentialProtector;
     private readonly IMonthlyScheduleCalculator scheduleCalculator;
     private readonly IClock clock;
+    private readonly AutomationExecutionOptions executionOptions;
     private readonly IUnitOfWork unitOfWork;
 
     public AutomationOrchestrator(
@@ -32,6 +33,7 @@ public sealed class AutomationOrchestrator
         ICredentialProtector credentialProtector,
         IMonthlyScheduleCalculator scheduleCalculator,
         IClock clock,
+        AutomationExecutionOptions executionOptions,
         IUnitOfWork unitOfWork)
     {
         this.accounts = accounts;
@@ -43,6 +45,7 @@ public sealed class AutomationOrchestrator
         this.credentialProtector = credentialProtector;
         this.scheduleCalculator = scheduleCalculator;
         this.clock = clock;
+        this.executionOptions = executionOptions;
         this.unitOfWork = unitOfWork;
     }
 
@@ -76,9 +79,10 @@ public sealed class AutomationOrchestrator
                 credentialProtector.Unprotect(account.EncryptedPortalPassword),
                 account.CustomerIdentifier);
 
-            result = await strategy.DownloadCurrentBillAsync(
+            result = await DownloadWithTimeoutAsync(
+                strategy,
                 new AutomationExecutionContext(account.UserId, account, operatorCompany, credential, clock.Today),
-                cancellationToken);
+                executionOptions.Timeout);
         }
         catch (DomainException ex)
         {
@@ -93,7 +97,10 @@ public sealed class AutomationOrchestrator
         }
         catch (OperationCanceledException)
         {
-            throw;
+            result = new AutomationDownloadResult(
+                AutomationRunStatus.ConnectionError,
+                "Execucao da automacao interrompida antes da conclusao.",
+                null);
         }
         catch (Exception ex)
         {
@@ -224,4 +231,41 @@ public sealed class AutomationOrchestrator
             AutomationRunStatus.ConnectionError => $"Falha de conexao ao acessar {operatorName}.",
             _ => $"Falha ao executar automacao para {operatorName}."
         };
+
+    private static async Task<AutomationDownloadResult> DownloadWithTimeoutAsync(
+        IOperatorAutomationStrategy strategy,
+        AutomationExecutionContext context,
+        TimeSpan timeout)
+    {
+        var executionTimeout = new CancellationTokenSource();
+        var automationTask = strategy.DownloadCurrentBillAsync(context, executionTimeout.Token);
+        var completedTask = await Task.WhenAny(automationTask, Task.Delay(timeout));
+
+        if (completedTask == automationTask)
+        {
+            executionTimeout.Dispose();
+            return await automationTask;
+        }
+
+        await executionTimeout.CancelAsync();
+        ObserveTimedOutAutomation(automationTask, executionTimeout);
+
+        return new AutomationDownloadResult(
+            AutomationRunStatus.ConnectionError,
+            $"Tempo limite de {timeout.TotalSeconds:0} segundos atingido ao executar a automacao. Tente novamente mais tarde ou use o operador demo para demonstracao.",
+            null);
+    }
+
+    private static void ObserveTimedOutAutomation(
+        Task<AutomationDownloadResult> automationTask,
+        CancellationTokenSource executionTimeout)
+        => _ = automationTask.ContinueWith(
+            completedTask =>
+            {
+                _ = completedTask.Exception;
+                executionTimeout.Dispose();
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
 }

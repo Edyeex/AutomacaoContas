@@ -61,6 +61,10 @@ function handleExpiredSession() {
 export async function apiRequest(path, options = {}) {
   const session = getSession();
   const auth = options.auth !== false;
+  const controller = options.timeoutMs ? new AbortController() : null;
+  const timeoutId = controller
+    ? window.setTimeout(() => controller.abort(), options.timeoutMs)
+    : null;
   const headers = {
     Accept: "application/json",
     ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -76,11 +80,34 @@ export async function apiRequest(path, options = {}) {
     headers.Authorization = `Bearer ${session.accessToken}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: options.method || "GET",
-    headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method: options.method || "GET",
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: options.signal || controller?.signal,
+    });
+  } catch (err) {
+    if (err?.name === "AbortError") {
+      throw new ApiError(
+        "A operacao demorou mais do que o esperado. Confira o historico e as notificacoes em instantes.",
+        408,
+        "request.timeout"
+      );
+    }
+
+    throw new ApiError(
+      "Nao foi possivel conectar ao servidor agora. Verifique se a API esta ativa e tente novamente.",
+      0,
+      "network.error"
+    );
+  } finally {
+    if (timeoutId) {
+      window.clearTimeout(timeoutId);
+    }
+  }
 
   if (response.status === 204) {
     return null;

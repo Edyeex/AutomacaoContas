@@ -96,6 +96,7 @@ public sealed class AutomationOrchestratorTests
                 credentialProtector,
                 ScheduleCalculator,
                 Clock,
+                new AutomationExecutionOptions(),
                 UnitOfWork);
     }
 
