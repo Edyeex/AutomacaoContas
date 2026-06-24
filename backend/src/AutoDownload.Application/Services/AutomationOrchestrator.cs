@@ -155,7 +155,7 @@ public sealed class AutomationOrchestrator
         await notifications.AddAsync(
             Notification.Create(
                 account.UserId,
-                BuildNotificationText(operatorCompany.Name, result),
+                BuildDetailedNotificationText(operatorCompany.Name, result),
                 result.Status == AutomationRunStatus.Success ? NotificationType.Success : NotificationType.Warning,
                 finishedAt),
             cancellationToken);
@@ -163,6 +163,18 @@ public sealed class AutomationOrchestrator
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result<HistoryResponse>.Success(run.ToResponse(operatorCompany));
+    }
+
+    private static string BuildDetailedNotificationText(string operatorName, AutomationDownloadResult result)
+    {
+        if (result.Status == AutomationRunStatus.Success)
+        {
+            return $"Boleto {operatorName} baixado com sucesso.";
+        }
+
+        return string.IsNullOrWhiteSpace(result.Message)
+            ? $"Falha ao executar automacao para {operatorName}."
+            : $"{operatorName}: {result.Message}";
     }
 
     private static string BuildNotificationText(string operatorName, AutomationDownloadResult result)

@@ -98,6 +98,10 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
                     fileName,
                     finalPath));
         }
+        catch (PortalLoginFailedException ex)
+        {
+            return new AutomationDownloadResult(AutomationRunStatus.LoginFailed, ex.Message, null);
+        }
         catch (WebDriverTimeoutException)
         {
             return new AutomationDownloadResult(
@@ -187,10 +191,25 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
         Click(wait, By.XPath("//button[contains(normalize-space(.), 'Entrar')]"), cancellationToken);
 
         wait.Until(current =>
-            !current.Url.Contains("/login", StringComparison.OrdinalIgnoreCase) &&
-            (current.Url.Contains("/minhavero", StringComparison.OrdinalIgnoreCase) ||
-             current.Url.Contains("/dashboard", StringComparison.OrdinalIgnoreCase) ||
-             current.Url.Contains("/painel", StringComparison.OrdinalIgnoreCase)));
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var body = SafeBodyText(current);
+            if (LooksLikeHumanVerification(body))
+            {
+                throw new PortalLoginFailedException(
+                    "Portal Vero solicitou verificacao adicional. Acesse manualmente o portal e conclua a validacao antes de executar novamente.");
+            }
+
+            if (LooksLikeLoginError(body))
+            {
+                throw new PortalLoginFailedException("Portal Vero recusou o login. Confira CPF/documento e senha.");
+            }
+
+            return !current.Url.Contains("/login", StringComparison.OrdinalIgnoreCase) &&
+                   (current.Url.Contains("/minhavero", StringComparison.OrdinalIgnoreCase) ||
+                    current.Url.Contains("/dashboard", StringComparison.OrdinalIgnoreCase) ||
+                    current.Url.Contains("/painel", StringComparison.OrdinalIgnoreCase));
+        });
     }
 
     private void OpenInvoicePage(
@@ -283,6 +302,28 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
         }
     }
 
+    private static bool LooksLikeLoginError(string text)
+        => ContainsAny(text, "senha invalida", "senha incorreta", "login invalido", "cpf invalido", "documento invalido", "credenciais", "usuario nao encontrado");
+
+    private static bool LooksLikeHumanVerification(string text)
+        => ContainsAny(text, "captcha", "recaptcha", "verificacao", "validacao", "codigo de seguranca", "sms", "e-mail");
+
+    private static bool ContainsAny(string? text, params string[] needles)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var normalized = text
+            .Normalize(System.Text.NormalizationForm.FormD)
+            .Where(ch => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) != System.Globalization.UnicodeCategory.NonSpacingMark)
+            .ToArray();
+        var haystack = new string(normalized).Normalize(System.Text.NormalizationForm.FormC).ToLowerInvariant();
+
+        return needles.Any(needle => haystack.Contains(needle, StringComparison.OrdinalIgnoreCase));
+    }
+
     private static string WaitForPdfDownload(
         string directory,
         TimeSpan timeout,
@@ -340,6 +381,14 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
         {
         }
         catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    private sealed class PortalLoginFailedException : Exception
+    {
+        public PortalLoginFailedException(string message)
+            : base(message)
         {
         }
     }
