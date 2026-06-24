@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0-bookworm-slim AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
 WORKDIR /src
 
 COPY Directory.Build.props ./
@@ -19,14 +19,14 @@ RUN dotnet publish src/AutoDownload.Api/AutoDownload.Api.csproj \
     --output /app/publish \
     /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-bookworm-slim AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime
 
 USER root
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
         ca-certificates \
-        chromium \
-        chromium-driver \
+        curl \
+        gnupg \
         fonts-liberation \
         libasound2 \
         libatk-bridge2.0-0 \
@@ -35,9 +35,17 @@ RUN apt-get update \
         libnss3 \
         libxss1 \
         xdg-utils \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
+        | gpg --dearmor -o /etc/apt/keyrings/google-linux-signing-keyring.gpg \
+    && chmod a+r /etc/apt/keyrings/google-linux-signing-keyring.gpg \
+    && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-linux-signing-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+        > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install --yes --no-install-recommends google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
-RUN chromium --version && chromedriver --version
+RUN google-chrome --version
 
 WORKDIR /app
 

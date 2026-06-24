@@ -180,7 +180,16 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
             return ChromeDriverService.CreateDefaultService();
         }
 
-        var driverPath = ResolveLinuxChromeDriverBinary();
+        var driverPath = TryResolveExistingFile(
+            "/usr/bin/chromedriver",
+            "/usr/local/bin/chromedriver",
+            "/usr/lib/chromium/chromedriver");
+
+        if (driverPath is null)
+        {
+            return ChromeDriverService.CreateDefaultService();
+        }
+
         return ChromeDriverService.CreateDefaultService(
             Path.GetDirectoryName(driverPath),
             Path.GetFileName(driverPath));
@@ -191,18 +200,15 @@ internal sealed class VeroInternetAutomationStrategy : IOperatorAutomationStrate
             "Chromium binary",
             "/usr/bin/chromium",
             "/usr/bin/chromium-browser",
-            "/usr/bin/google-chrome");
-
-    private static string ResolveLinuxChromeDriverBinary()
-        => ResolveExistingFile(
-            "ChromeDriver binary",
-            "/usr/bin/chromedriver",
-            "/usr/local/bin/chromedriver",
-            "/usr/lib/chromium/chromedriver");
+            "/usr/bin/google-chrome",
+            "/opt/google/chrome/chrome");
 
     private static string ResolveExistingFile(string description, params string[] candidates)
-        => candidates.FirstOrDefault(File.Exists)
+        => TryResolveExistingFile(candidates)
            ?? throw new WebDriverException($"{description} was not found in the container.");
+
+    private static string? TryResolveExistingFile(params string[] candidates)
+        => candidates.FirstOrDefault(File.Exists);
 
     private void Login(
         IWebDriver driver,
