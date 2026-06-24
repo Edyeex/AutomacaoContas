@@ -1,14 +1,38 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppBrand from "./components/AppBrand";
 import { apiRequest, saveSession } from "./lib/apiClient";
 
 export default function LoginPage() {
   const router = useRouter();
+  const formRef = useRef(null);
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    function clearLoginFields() {
+      setEmail("");
+      setSenha("");
+      formRef.current?.reset();
+
+      const emailInput = document.getElementById("login-email");
+      const passwordInput = document.getElementById("login-password");
+
+      if (emailInput) emailInput.value = "";
+      if (passwordInput) passwordInput.value = "";
+    }
+
+    clearLoginFields();
+    const autofillTimer = window.setTimeout(clearLoginFields, 150);
+    window.addEventListener("pageshow", clearLoginFields);
+
+    return () => {
+      window.clearTimeout(autofillTimer);
+      window.removeEventListener("pageshow", clearLoginFields);
+    };
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -43,26 +67,33 @@ export default function LoginPage() {
           {error && (
             <p style={{ color: "var(--danger)", fontSize: 13, marginBottom: 12 }}>{error}</p>
           )}
-          <form onSubmit={handleSubmit}>
+          <form ref={formRef} onSubmit={handleSubmit} autoComplete="off">
             <div className="form-group">
-              <label htmlFor="email">E-mail</label>
+              <label htmlFor="login-email">E-mail</label>
               <input
-                id="email"
+                id="login-email"
+                name="autodownload-login-email"
                 className="form-input"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck="false"
               />
             </div>
             <div className="form-group">
-              <label htmlFor="senha">Senha</label>
+              <label htmlFor="login-password">Senha</label>
               <input
-                id="senha"
+                id="login-password"
+                name="autodownload-login-password"
                 className="form-input"
                 type="password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
+                autoComplete="new-password"
                 placeholder="••••••••"
               />
             </div>
