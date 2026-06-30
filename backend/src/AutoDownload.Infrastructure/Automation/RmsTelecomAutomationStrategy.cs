@@ -323,7 +323,7 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         }
         catch (WebDriverTimeoutException)
         {
-            throw;
+            return null;
         }
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
         {
