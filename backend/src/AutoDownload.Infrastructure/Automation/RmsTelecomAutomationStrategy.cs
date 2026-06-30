@@ -535,16 +535,12 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
 
         ScrollIntoView(driver, invoiceCard);
         ClickElement(driver, invoiceCard);
-        wait.Until(current =>
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!DocumentIsReady(current))
-            {
-                return false;
-            }
 
-            return ContainsAny(SafeBodyText(current), "detalhes da fatura", "escolha como pagar", "vencimento");
-        });
+        if (!TryWaitForBillingDetails(driver, cancellationToken, TimeSpan.FromSeconds(8)))
+        {
+            TryClickElementWithScript(driver, invoiceCard);
+            TryWaitForBillingDetails(driver, cancellationToken, TimeSpan.FromSeconds(5));
+        }
     }
 
     private static void ClickInvoicePdfAction(
@@ -1028,6 +1024,46 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
 
     private static void ScrollIntoView(IWebDriver driver, IWebElement element)
         => ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView({ block: 'center' });", element);
+
+    private static bool TryWaitForBillingDetails(
+        IWebDriver driver,
+        CancellationToken cancellationToken,
+        TimeSpan timeout)
+    {
+        try
+        {
+            var quickWait = new WebDriverWait(driver, timeout);
+            return quickWait.Until(current =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!DocumentIsReady(current))
+                {
+                    return false;
+                }
+
+                return ContainsAny(SafeBodyText(current), "detalhes da fatura", "escolha como pagar", "vencimento");
+            });
+        }
+        catch (WebDriverTimeoutException)
+        {
+            return false;
+        }
+        catch (StaleElementReferenceException)
+        {
+            return false;
+        }
+    }
+
+    private static void TryClickElementWithScript(IWebDriver driver, IWebElement element)
+    {
+        try
+        {
+            ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", element);
+        }
+        catch (WebDriverException)
+        {
+        }
+    }
 
     private static string SafeBodyText(IWebDriver driver)
     {
