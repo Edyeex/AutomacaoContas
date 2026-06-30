@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using AutoDownload.Application.Abstractions;
 using AutoDownload.Domain.Entities;
 using AutoDownload.Domain.Enums;
@@ -19,7 +20,7 @@ internal sealed class RmsTelecomAutomationOptions
 
     public string PortalUrl { get; init; } = "https://fatura.rmstelecom.net/";
 
-    public string InvoicesUrl { get; init; } = "https://fatura.rmstelecom.net/";
+    public string InvoicesUrl { get; init; } = "https://fatura.rmstelecom.net/invoices";
 
     public string ApiBaseUrl { get; init; } = "https://api.portal.cs30.7az.com.br/";
 
@@ -443,13 +444,16 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         cancellationToken.ThrowIfCancellationRequested();
 
         OpenFirstPayableInvoice(driver, wait, cancellationToken);
+        var detailsText = SafeBodyText(driver);
         ClickInvoicePdfAction(driver, wait, cancellationToken);
+        var paymentText = SafeBodyText(driver);
 
-        var pdf = WaitForPdfDownload(
+        var pdf = TryWaitForPdfDownload(
             tempDirectory,
-            TimeSpan.FromSeconds(Math.Max(10, options.DownloadTimeoutSeconds)),
+            TimeSpan.FromSeconds(Math.Min(10, Math.Max(5, options.DownloadTimeoutSeconds))),
             cancellationToken);
-        var pageText = SafeBodyText(driver);
+        var pageText = string.Join(Environment.NewLine, detailsText, paymentText, SafeBodyText(driver));
+        pdf ??= CreatePaymentDataPdf(tempDirectory, pageText);
 
         return new RmsInvoiceDownload(pdf, ParseDueDate(pageText), ParseAmount(pageText));
     }
@@ -473,6 +477,12 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
                 throw new WebDriverTimeoutException("Nao ha fatura RMS disponivel para pagamento.");
             }
 
+            var payNowAction = FindActionByText(current, "Pagar agora");
+            if (payNowAction is not null)
+            {
+                return payNowAction;
+            }
+
             var statusElements = current
                 .FindElements(By.XPath("//*[contains(normalize-space(.), 'Vencida') or contains(normalize-space(.), 'A vencer')]"))
                 .Where(IsVisibleAndEnabled)
@@ -487,12 +497,27 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
                 }
             }
 
+            var payAction = FindActionByText(current, "Pagar");
+            if (payAction is not null)
+            {
+                return payAction;
+            }
+
             return null;
         });
 
         ScrollIntoView(driver, invoiceCard);
         ClickElement(driver, invoiceCard);
-        WaitForDocument(driver, wait);
+        wait.Until(current =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!DocumentIsReady(current))
+            {
+                return false;
+            }
+
+            return ContainsAny(SafeBodyText(current), "detalhes da fatura", "escolha como pagar", "vencimento");
+        });
     }
 
     private static void ClickInvoicePdfAction(
@@ -513,7 +538,8 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
                 "Ver fatura",
                 "Baixar fatura",
                 "Download da fatura",
-                "Visualizar fatura");
+                "Visualizar fatura",
+                "Boleto");
             if (action is not null)
             {
                 return action;
@@ -531,7 +557,8 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
                 "Ver fatura",
                 "Baixar fatura",
                 "Download da fatura",
-                "Visualizar fatura");
+                "Visualizar fatura",
+                "Boleto");
         });
 
         ScrollIntoView(driver, pdfAction);
@@ -635,7 +662,7 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
             .ExecuteScript("return document.readyState")
             ?.ToString() is "complete" or "interactive";
 
-    private static string WaitForPdfDownload(
+    private static string? TryWaitForPdfDownload(
         string directory,
         TimeSpan timeout,
         CancellationToken cancellationToken)
@@ -658,7 +685,7 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
             Thread.Sleep(TimeSpan.FromSeconds(1));
         }
 
-        throw new WebDriverTimeoutException("O download do boleto RMS nao foi concluido dentro do tempo esperado.");
+        return null;
     }
 
     private static string? TryFindDownloadedPdf(string directory)
@@ -666,6 +693,139 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
             .EnumerateFiles(directory, "*.pdf", SearchOption.TopDirectoryOnly)
             .OrderByDescending(File.GetLastWriteTimeUtc)
             .FirstOrDefault();
+
+    private static string CreatePaymentDataPdf(string directory, string pageText)
+    {
+        var path = Path.Combine(directory, $"rms_payment_data_{Guid.NewGuid():N}.pdf");
+        var amount = ParseAmount(pageText);
+        var dueDate = ParseDueDate(pageText);
+        var barcode = TryParseBarcodeFromText(pageText) ?? "Codigo de barras nao identificado.";
+        var amountText = amount?.ToString("C", CultureInfo.GetCultureInfo("pt-BR")) ?? "Nao identificado.";
+        var dueDateText = dueDate?.ToString("dd/MM/yyyy", CultureInfo.GetCultureInfo("pt-BR")) ?? "Nao identificado.";
+
+        var lines = new[]
+        {
+            "AutoDownload - RMS Telecom",
+            "Dados de pagamento do boleto",
+            $"Valor: {amountText}",
+            $"Vencimento: {dueDateText}",
+            "Codigo de barras:",
+            barcode,
+            "",
+            "Observacao:",
+            "O portal RMS exibiu o codigo de barras, mas nao entregou um arquivo PDF para download.",
+            "Este PDF foi gerado automaticamente pelo AutoDownload com os dados exibidos no portal."
+        };
+
+        File.WriteAllBytes(path, BuildSimplePdf(lines));
+        return path;
+    }
+
+    private static string? TryParseBarcodeFromText(string text)
+    {
+        var formattedMatch = Regex.Match(
+            text,
+            @"\b\d{5}\.\d{5}\s+\d{5}\.\d{6}\s+\d{5}\.\d{6}\s+\d\s+\d{14}\b",
+            RegexOptions.CultureInvariant);
+        if (formattedMatch.Success)
+        {
+            return formattedMatch.Value;
+        }
+
+        var digitMatch = Regex.Match(text, @"\b\d{47,48}\b", RegexOptions.CultureInvariant);
+        return digitMatch.Success ? digitMatch.Value : null;
+    }
+
+    private static byte[] BuildSimplePdf(IReadOnlyList<string> lines)
+    {
+        var contentBuilder = new StringBuilder();
+        contentBuilder.AppendLine("BT");
+        contentBuilder.AppendLine("/F1 16 Tf");
+        contentBuilder.AppendLine("50 790 Td");
+
+        var firstLine = true;
+        foreach (var line in lines.SelectMany(WrapPdfLine))
+        {
+            if (!firstLine)
+            {
+                contentBuilder.AppendLine("0 -22 Td");
+            }
+
+            contentBuilder.Append('(');
+            contentBuilder.Append(EscapePdfText(line));
+            contentBuilder.AppendLine(") Tj");
+
+            if (firstLine)
+            {
+                contentBuilder.AppendLine("/F1 11 Tf");
+                firstLine = false;
+            }
+        }
+
+        contentBuilder.AppendLine("ET");
+        var content = contentBuilder.ToString();
+        var contentLength = Encoding.ASCII.GetByteCount(content);
+
+        var objects = new[]
+        {
+            "<< /Type /Catalog /Pages 2 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+            $"<< /Length {contentLength} >>\nstream\n{content}endstream"
+        };
+
+        using var stream = new MemoryStream();
+        WriteAscii(stream, "%PDF-1.4\n");
+
+        var offsets = new List<long> { 0 };
+        for (var index = 0; index < objects.Length; index++)
+        {
+            offsets.Add(stream.Position);
+            WriteAscii(stream, $"{index + 1} 0 obj\n{objects[index]}\nendobj\n");
+        }
+
+        var xrefOffset = stream.Position;
+        WriteAscii(stream, $"xref\n0 {objects.Length + 1}\n");
+        WriteAscii(stream, "0000000000 65535 f \n");
+        foreach (var offset in offsets.Skip(1))
+        {
+            WriteAscii(stream, $"{offset:0000000000} 00000 n \n");
+        }
+
+        WriteAscii(
+            stream,
+            $"trailer\n<< /Size {objects.Length + 1} /Root 1 0 R >>\nstartxref\n{xrefOffset}\n%%EOF");
+
+        return stream.ToArray();
+    }
+
+    private static IEnumerable<string> WrapPdfLine(string line)
+    {
+        const int maxLength = 86;
+        if (line.Length <= maxLength)
+        {
+            yield return line;
+            yield break;
+        }
+
+        for (var index = 0; index < line.Length; index += maxLength)
+        {
+            yield return line.Substring(index, Math.Min(maxLength, line.Length - index));
+        }
+    }
+
+    private static string EscapePdfText(string value)
+        => value
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("(", "\\(", StringComparison.Ordinal)
+            .Replace(")", "\\)", StringComparison.Ordinal);
+
+    private static void WriteAscii(Stream stream, string value)
+    {
+        var bytes = Encoding.ASCII.GetBytes(value);
+        stream.Write(bytes, 0, bytes.Length);
+    }
 
     private static IReadOnlyList<RmsInvoice> ParseInvoices(string json)
     {
