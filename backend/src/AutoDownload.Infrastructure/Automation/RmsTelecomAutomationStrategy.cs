@@ -222,27 +222,57 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         driver.Navigate().GoToUrl(options.LoginUrl);
         WaitForDocument(driver, wait);
 
-        var documentInput = wait.Until(current =>
+        IWebElement documentInput;
+        try
         {
-            var candidate = current.FindElement(By.CssSelector("#cpfcnpj"));
-            return candidate.Displayed && candidate.Enabled ? candidate : null;
-        });
+            documentInput = wait.Until(current =>
+            {
+                var candidate = current.FindElement(By.CssSelector("#cpfcnpj"));
+                return candidate.Displayed && candidate.Enabled ? candidate : null;
+            }) ?? throw new WebDriverTimeoutException("Campo CPF/CNPJ nao retornado pelo portal RMS.");
+        }
+        catch (WebDriverTimeoutException ex)
+        {
+            throw new PortalLoginFailedException(
+                $"Portal RMS nao exibiu o campo de CPF/CNPJ. {BuildSafeTimeoutMessage(ex)}");
+        }
+
         documentInput.Clear();
         documentInput.SendKeys(credential.Login);
 
-        var passwordInput = wait.Until(current =>
+        IWebElement passwordInput;
+        try
         {
-            var candidate = current.FindElement(By.CssSelector("#passwd"));
-            return candidate.Displayed && candidate.Enabled ? candidate : null;
-        });
+            passwordInput = wait.Until(current =>
+            {
+                var candidate = current.FindElement(By.CssSelector("#passwd"));
+                return candidate.Displayed && candidate.Enabled ? candidate : null;
+            }) ?? throw new WebDriverTimeoutException("Campo de senha nao retornado pelo portal RMS.");
+        }
+        catch (WebDriverTimeoutException ex)
+        {
+            throw new PortalLoginFailedException(
+                $"Portal RMS nao exibiu o campo de senha. {BuildSafeTimeoutMessage(ex)}");
+        }
+
         passwordInput.Clear();
         passwordInput.SendKeys(credential.Password);
 
-        var loginButton = wait.Until(current =>
+        IWebElement loginButton;
+        try
         {
-            var candidate = current.FindElement(By.CssSelector("#loginButton"));
-            return candidate.Displayed && candidate.Enabled ? candidate : null;
-        });
+            loginButton = wait.Until(current =>
+            {
+                var candidate = current.FindElement(By.CssSelector("#loginButton"));
+                return candidate.Displayed && candidate.Enabled ? candidate : null;
+            }) ?? throw new WebDriverTimeoutException("Botao de login nao retornado pelo portal RMS.");
+        }
+        catch (WebDriverTimeoutException ex)
+        {
+            throw new PortalLoginFailedException(
+                $"Portal RMS nao exibiu o botao de login. {BuildSafeTimeoutMessage(ex)}");
+        }
+
         ClickElement(driver, loginButton);
 
         try
@@ -703,7 +733,15 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
     }
 
     private static void WaitForDocument(IWebDriver driver, WebDriverWait wait)
-        => wait.Until(DocumentIsReady);
+    {
+        try
+        {
+            wait.Until(DocumentIsReady);
+        }
+        catch (WebDriverTimeoutException)
+        {
+        }
+    }
 
     private static bool DocumentIsReady(IWebDriver driver)
         => ((IJavaScriptExecutor)driver)
