@@ -103,11 +103,11 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         {
             return new AutomationDownloadResult(AutomationRunStatus.LoginFailed, ex.Message, null);
         }
-        catch (WebDriverTimeoutException)
+        catch (WebDriverTimeoutException ex)
         {
             return new AutomationDownloadResult(
                 AutomationRunStatus.BillUnavailable,
-                "Nao foi possivel localizar boleto RMS disponivel para download.",
+                $"Nao foi possivel localizar boleto RMS disponivel para download. Detalhe: {BuildSafeTimeoutMessage(ex)}",
                 null);
         }
         catch (NoSuchElementException)
@@ -245,17 +245,25 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         });
         ClickElement(driver, loginButton);
 
-        wait.Until(current =>
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var body = SafeBodyText(current);
-            if (LooksLikeLoginError(body))
+            wait.Until(current =>
             {
-                throw new PortalLoginFailedException("Falha de login no portal RMS. Confira CPF e senha.");
-            }
+                cancellationToken.ThrowIfCancellationRequested();
+                var body = SafeBodyText(current);
+                if (LooksLikeLoginError(body))
+                {
+                    throw new PortalLoginFailedException("Falha de login no portal RMS. Confira CPF e senha.");
+                }
 
-            return !IsLoginPage(current);
-        });
+                return !IsLoginPage(current);
+            });
+        }
+        catch (WebDriverTimeoutException ex)
+        {
+            throw new PortalLoginFailedException(
+                $"Portal RMS nao confirmou o login dentro do tempo esperado. {BuildSafeTimeoutMessage(ex)}");
+        }
     }
 
     private void OpenInvoicesArea(
@@ -267,17 +275,26 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         driver.Navigate().GoToUrl(options.InvoicesUrl);
         WaitForDocument(driver, wait);
 
-        wait.Until(current =>
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (LooksLikeLoginError(SafeBodyText(current)))
+            wait.Until(current =>
             {
-                throw new PortalLoginFailedException("Falha de login no portal RMS. Confira CPF e senha.");
-            }
+                cancellationToken.ThrowIfCancellationRequested();
+                if (LooksLikeLoginError(SafeBodyText(current)))
+                {
+                    throw new PortalLoginFailedException("Falha de login no portal RMS. Confira CPF e senha.");
+                }
 
-            return !IsLoginPage(current) &&
-                   (!string.IsNullOrWhiteSpace(GetPortalToken(current)) || PageLooksLikeBillingArea(current));
-        });
+                return !IsLoginPage(current) &&
+                       (!string.IsNullOrWhiteSpace(GetPortalToken(current)) || PageLooksLikeBillingArea(current));
+            });
+        }
+        catch (WebDriverTimeoutException ex)
+        {
+            throw new WebDriverTimeoutException(
+                $"Area de faturas do portal RMS nao carregou apos o login. {BuildSafeTimeoutMessage(ex)}",
+                ex);
+        }
     }
 
     private RmsInvoiceDownload DownloadPayableInvoice(
@@ -463,48 +480,58 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         WebDriverWait wait,
         CancellationToken cancellationToken)
     {
-        var invoiceCard = wait.Until(current =>
+        IWebElement invoiceCard;
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!DocumentIsReady(current))
+            invoiceCard = wait.Until(current =>
             {
-                return null;
-            }
-
-            var body = SafeBodyText(current);
-            if (ContainsAny(body, "voce nao tem faturas pendentes", "nenhuma fatura", "nao existem faturas"))
-            {
-                throw new WebDriverTimeoutException("Nao ha fatura RMS disponivel para pagamento.");
-            }
-
-            var payNowAction = FindActionByText(current, "Pagar agora");
-            if (payNowAction is not null)
-            {
-                return payNowAction;
-            }
-
-            var statusElements = current
-                .FindElements(By.XPath("//*[contains(normalize-space(.), 'Vencida') or contains(normalize-space(.), 'A vencer')]"))
-                .Where(IsVisibleAndEnabled)
-                .ToList();
-
-            foreach (var statusElement in statusElements)
-            {
-                var clickableCard = FindNearestClickableAncestor(current, statusElement);
-                if (clickableCard is not null)
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!DocumentIsReady(current))
                 {
-                    return clickableCard;
+                    return null;
                 }
-            }
 
-            var payAction = FindActionByText(current, "Pagar");
-            if (payAction is not null)
-            {
-                return payAction;
-            }
+                var body = SafeBodyText(current);
+                if (ContainsAny(body, "voce nao tem faturas pendentes", "nenhuma fatura", "nao existem faturas"))
+                {
+                    throw new WebDriverTimeoutException("Nao ha fatura RMS disponivel para pagamento.");
+                }
 
-            return null;
-        });
+                var payNowAction = FindActionByText(current, "Pagar agora");
+                if (payNowAction is not null)
+                {
+                    return payNowAction;
+                }
+
+                var statusElements = current
+                    .FindElements(By.XPath("//*[contains(normalize-space(.), 'Vencida') or contains(normalize-space(.), 'A vencer')]"))
+                    .Where(IsVisibleAndEnabled)
+                    .ToList();
+
+                foreach (var statusElement in statusElements)
+                {
+                    var clickableCard = FindNearestClickableAncestor(current, statusElement);
+                    if (clickableCard is not null)
+                    {
+                        return clickableCard;
+                    }
+                }
+
+                var payAction = FindActionByText(current, "Pagar");
+                if (payAction is not null)
+                {
+                    return payAction;
+                }
+
+                return null;
+            }) ?? throw new WebDriverTimeoutException("O portal RMS nao retornou elemento de pagamento.");
+        }
+        catch (WebDriverTimeoutException ex) when (!ContainsAny(ex.Message, "nao ha fatura"))
+        {
+            throw new WebDriverTimeoutException(
+                $"Nao localizei botao Pagar agora/Pagar ou fatura em aberto no portal RMS. {BuildSafeTimeoutMessage(ex)}",
+                ex);
+        }
 
         ScrollIntoView(driver, invoiceCard);
         ClickElement(driver, invoiceCard);
@@ -525,41 +552,51 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         WebDriverWait wait,
         CancellationToken cancellationToken)
     {
-        var pdfAction = wait.Until(current =>
+        IWebElement pdfAction;
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!DocumentIsReady(current))
+            pdfAction = wait.Until(current =>
             {
-                return null;
-            }
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!DocumentIsReady(current))
+                {
+                    return null;
+                }
 
-            var action = FindActionByText(
-                current,
-                "Ver fatura",
-                "Baixar fatura",
-                "Download da fatura",
-                "Visualizar fatura",
-                "Boleto");
-            if (action is not null)
-            {
-                return action;
-            }
+                var action = FindActionByText(
+                    current,
+                    "Ver fatura",
+                    "Baixar fatura",
+                    "Download da fatura",
+                    "Visualizar fatura",
+                    "Boleto");
+                if (action is not null)
+                {
+                    return action;
+                }
 
-            var expandAction = FindActionByText(current, "Ver mais");
-            if (expandAction is not null)
-            {
-                ScrollIntoView(current, expandAction);
-                ClickElement(current, expandAction);
-            }
+                var expandAction = FindActionByText(current, "Ver mais");
+                if (expandAction is not null)
+                {
+                    ScrollIntoView(current, expandAction);
+                    ClickElement(current, expandAction);
+                }
 
-            return FindActionByText(
-                current,
-                "Ver fatura",
-                "Baixar fatura",
-                "Download da fatura",
-                "Visualizar fatura",
-                "Boleto");
-        });
+                return FindActionByText(
+                    current,
+                    "Ver fatura",
+                    "Baixar fatura",
+                    "Download da fatura",
+                    "Visualizar fatura",
+                    "Boleto");
+            }) ?? throw new WebDriverTimeoutException("O portal RMS nao retornou acao de boleto.");
+        }
+        catch (WebDriverTimeoutException ex)
+        {
+            throw new WebDriverTimeoutException(
+                $"Nao localizei a opcao Boleto nos detalhes da fatura RMS. {BuildSafeTimeoutMessage(ex)}",
+                ex);
+        }
 
         ScrollIntoView(driver, pdfAction);
         ClickElement(driver, pdfAction);
@@ -616,6 +653,21 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
 
     private static bool LooksLikeLoginError(string text)
         => ContainsAny(text, "senha invalida", "senha incorreta", "login invalido", "cpf invalido", "usuario nao encontrado", "credenciais");
+
+    private static string BuildSafeTimeoutMessage(WebDriverTimeoutException exception)
+    {
+        var message = exception.Message;
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return "Timeout sem detalhe adicional.";
+        }
+
+        return message
+            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault()
+            ?.Trim()
+            ?? "Timeout sem detalhe adicional.";
+    }
 
     private static string? GetPortalToken(IWebDriver driver)
         => ((IJavaScriptExecutor)driver)
