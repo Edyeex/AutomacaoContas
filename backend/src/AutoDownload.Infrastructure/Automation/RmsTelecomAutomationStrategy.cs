@@ -39,6 +39,11 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
 {
     public const string OperatorCode = "rms-telecom";
 
+    private const string BrowserUserAgent =
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
+
+    private const string BrowserAcceptLanguage = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7";
+
     private static readonly HttpClient PortalHttpClient = new();
 
     private readonly RmsTelecomAutomationOptions options;
@@ -140,12 +145,16 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         chromeOptions.AddUserProfilePreference("download.prompt_for_download", false);
         chromeOptions.AddUserProfilePreference("download.directory_upgrade", true);
         chromeOptions.AddUserProfilePreference("plugins.always_open_pdf_externally", true);
+        chromeOptions.AddUserProfilePreference("intl.accept_languages", BrowserAcceptLanguage);
         chromeOptions.AddArgument("--disable-blink-features=AutomationControlled");
         chromeOptions.AddArgument("--disable-extensions");
         chromeOptions.AddArgument("--disable-gpu");
+        chromeOptions.AddArgument("--disable-infobars");
         chromeOptions.AddArgument("--disable-popup-blocking");
+        chromeOptions.AddArgument("--lang=pt-BR");
         chromeOptions.AddArgument("--remote-debugging-port=0");
         chromeOptions.AddArgument("--start-maximized");
+        chromeOptions.AddArgument($"--user-agent={BrowserUserAgent}");
         chromeOptions.AddArgument($"--user-data-dir={profileDirectory}");
         chromeOptions.AddExcludedArgument("enable-automation");
 
@@ -227,14 +236,19 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         {
             documentInput = wait.Until(current =>
             {
-                var candidate = current.FindElement(By.CssSelector("#cpfcnpj"));
-                return candidate.Displayed && candidate.Enabled ? candidate : null;
+                return FindFirstVisibleElement(
+                    current,
+                    By.CssSelector("#cpfcnpj"),
+                    By.CssSelector("input[name='cpfcnpj']"),
+                    By.CssSelector("input[name='cpfCnpj']"),
+                    By.XPath("//input[contains(translate(@placeholder, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'CPF') or contains(translate(@placeholder, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'CNPJ')]"));
             }) ?? throw new WebDriverTimeoutException("Campo CPF/CNPJ nao retornado pelo portal RMS.");
         }
         catch (WebDriverTimeoutException ex)
         {
             throw new PortalLoginFailedException(
-                $"Portal RMS nao exibiu o campo de CPF/CNPJ. {BuildSafeTimeoutMessage(ex)}");
+                TryBuildBlockedPortalMessage(driver)
+                ?? $"Portal RMS nao exibiu o campo de CPF/CNPJ. {BuildSafeTimeoutMessage(ex)}");
         }
 
         documentInput.Clear();
@@ -245,8 +259,12 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         {
             passwordInput = wait.Until(current =>
             {
-                var candidate = current.FindElement(By.CssSelector("#passwd"));
-                return candidate.Displayed && candidate.Enabled ? candidate : null;
+                return FindFirstVisibleElement(
+                    current,
+                    By.CssSelector("#passwd"),
+                    By.CssSelector("input[type='password']"),
+                    By.CssSelector("input[name='password']"),
+                    By.XPath("//input[contains(translate(@placeholder, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'SENHA')]"));
             }) ?? throw new WebDriverTimeoutException("Campo de senha nao retornado pelo portal RMS.");
         }
         catch (WebDriverTimeoutException ex)
@@ -263,8 +281,11 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         {
             loginButton = wait.Until(current =>
             {
-                var candidate = current.FindElement(By.CssSelector("#loginButton"));
-                return candidate.Displayed && candidate.Enabled ? candidate : null;
+                return FindFirstVisibleElement(
+                    current,
+                    By.CssSelector("#loginButton"),
+                    By.CssSelector("button[type='submit']"),
+                    By.XPath("//button[contains(translate(normalize-space(.), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'FAZER LOGIN') or contains(translate(normalize-space(.), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'ENTRAR')]"));
             }) ?? throw new WebDriverTimeoutException("Botao de login nao retornado pelo portal RMS.");
         }
         catch (WebDriverTimeoutException ex)
@@ -474,9 +495,8 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Headers.Referrer = new Uri(options.PortalUrl);
-        request.Headers.UserAgent.ParseAdd(
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-            "(KHTML, like Gecko) Chrome/125.0 Safari/537.36");
+        request.Headers.UserAgent.ParseAdd(BrowserUserAgent);
+        request.Headers.AcceptLanguage.ParseAdd(BrowserAcceptLanguage);
         request.Headers.TryAddWithoutValidation("Origin", portalOrigin);
 
         return request;
@@ -680,6 +700,41 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
     private static bool LooksLikeLoginError(string text)
         => ContainsAny(text, "senha invalida", "senha incorreta", "login invalido", "cpf invalido", "usuario nao encontrado", "credenciais");
 
+    private static string? TryBuildBlockedPortalMessage(IWebDriver driver)
+    {
+        var visibleText = SafeBodyText(driver);
+        var pageSignal = string.Join(Environment.NewLine, driver.Title, driver.Url, visibleText);
+
+        if (ContainsAny(
+                pageSignal,
+                "too many requests",
+                "429",
+                "rate limit",
+                "access denied",
+                "forbidden",
+                "cloudflare",
+                "just a moment"))
+        {
+            return "Portal RMS nao exibiu o formulario de login no servidor hospedado. A pagina retornou sinal de bloqueio ou limite de acesso, como 429/Too Many Requests.";
+        }
+
+        var hint = BuildVisiblePageHint(visibleText);
+        return hint is null
+            ? null
+            : $"Portal RMS nao exibiu o formulario de login. Conteudo visivel no servidor: {hint}";
+    }
+
+    private static string? BuildVisiblePageHint(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        var normalized = Regex.Replace(text, "\\s+", " ").Trim();
+        return normalized.Length <= 180 ? normalized : normalized[..180] + "...";
+    }
+
     private static string BuildSafeTimeoutMessage(WebDriverTimeoutException exception)
     {
         var message = exception.Message;
@@ -710,6 +765,23 @@ internal sealed class RmsTelecomAutomationStrategy : IOperatorAutomationStrategy
         {
             return false;
         }
+    }
+
+    private static IWebElement? FindFirstVisibleElement(IWebDriver driver, params By[] selectors)
+    {
+        foreach (var selector in selectors)
+        {
+            var element = driver
+                .FindElements(selector)
+                .FirstOrDefault(IsVisibleAndEnabled);
+
+            if (element is not null)
+            {
+                return element;
+            }
+        }
+
+        return null;
     }
 
     private static bool ContainsAny(string? text, params string[] needles)
