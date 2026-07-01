@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import PasswordInput from "../../components/PasswordInput";
 import { apiRequest, clearSession, getSession, saveSession } from "../../lib/apiClient";
 import { useApiResource } from "../../lib/useApiResource";
 
@@ -25,6 +26,8 @@ export default function ConfiguracoesPage() {
   const [senhaSaved, setSenhaSaved] = useState(false);
   const [error, setError] = useState("");
   const [senhaError, setSenhaError] = useState("");
+  const [profileFieldErrors, setProfileFieldErrors] = useState({});
+  const [senhaFieldErrors, setSenhaFieldErrors] = useState({});
 
   useEffect(() => {
     const sessionUser = getSession()?.user;
@@ -36,15 +39,32 @@ export default function ConfiguracoesPage() {
 
   function updateForm(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    setProfileFieldErrors((prev) => ({ ...prev, [field]: "" }));
   }
 
   function updateSenha(field, value) {
     setSenhaForm((prev) => ({ ...prev, [field]: value }));
+    setSenhaFieldErrors((prev) => ({ ...prev, [field]: "" }));
   }
 
   async function handleSaveProfile(e) {
     e.preventDefault();
     setError("");
+    const nextFieldErrors = {};
+
+    if (!form.nome.trim()) {
+      nextFieldErrors.nome = "Nome completo é obrigatório.";
+    }
+
+    if (!form.email.trim()) {
+      nextFieldErrors.email = "E-mail é obrigatório.";
+    }
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setProfileFieldErrors(nextFieldErrors);
+      setError("Revise os campos destacados.");
+      return;
+    }
 
     if (usingFallback) {
       setSaved(true);
@@ -72,9 +92,27 @@ export default function ConfiguracoesPage() {
   async function handleSavePassword(e) {
     e.preventDefault();
     setSenhaError("");
+    const nextFieldErrors = {};
 
-    if (senhaForm.nova !== senhaForm.confirmar) {
-      setSenhaError("As senhas não coincidem.");
+    if (!senhaForm.atual) {
+      nextFieldErrors.atual = "Senha atual é obrigatória.";
+    }
+
+    if (!senhaForm.nova) {
+      nextFieldErrors.nova = "Nova senha é obrigatória.";
+    } else if (senhaForm.nova.length < 6) {
+      nextFieldErrors.nova = "Nova senha deve ter no mínimo 6 caracteres.";
+    }
+
+    if (!senhaForm.confirmar) {
+      nextFieldErrors.confirmar = "Confirmar nova senha é obrigatório.";
+    } else if (senhaForm.nova && senhaForm.nova !== senhaForm.confirmar) {
+      nextFieldErrors.confirmar = "Confirmação de senha não confere.";
+    }
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setSenhaFieldErrors(nextFieldErrors);
+      setSenhaError("Revise os campos destacados.");
       return;
     }
 
@@ -119,20 +157,24 @@ export default function ConfiguracoesPage() {
               <div className="form-group">
                 <label>Nome completo</label>
                 <input
-                  className="form-input"
+                  className={`form-input ${profileFieldErrors.nome ? "is-invalid" : ""}`}
                   type="text"
                   value={form.nome}
                   onChange={(e) => updateForm("nome", e.target.value)}
+                  aria-invalid={Boolean(profileFieldErrors.nome)}
                 />
+                {profileFieldErrors.nome && <p className="field-error">{profileFieldErrors.nome}</p>}
               </div>
               <div className="form-group">
                 <label>E-mail</label>
                 <input
-                  className="form-input"
+                  className={`form-input ${profileFieldErrors.email ? "is-invalid" : ""}`}
                   type="email"
                   value={form.email}
                   onChange={(e) => updateForm("email", e.target.value)}
+                  aria-invalid={Boolean(profileFieldErrors.email)}
                 />
+                {profileFieldErrors.email && <p className="field-error">{profileFieldErrors.email}</p>}
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -155,31 +197,34 @@ export default function ConfiguracoesPage() {
           <form onSubmit={handleSavePassword}>
             <div className="form-group">
               <label>Senha atual</label>
-              <input
-                className="form-input"
-                type="password"
+              <PasswordInput
+                inputClassName={`form-input ${senhaFieldErrors.atual ? "is-invalid" : ""}`}
                 value={senhaForm.atual}
                 onChange={(e) => updateSenha("atual", e.target.value)}
+                aria-invalid={Boolean(senhaFieldErrors.atual)}
               />
+              {senhaFieldErrors.atual && <p className="field-error">{senhaFieldErrors.atual}</p>}
             </div>
             <div className="settings-row">
               <div className="form-group">
                 <label>Nova senha</label>
-                <input
-                  className="form-input"
-                  type="password"
+                <PasswordInput
+                  inputClassName={`form-input ${senhaFieldErrors.nova ? "is-invalid" : ""}`}
                   value={senhaForm.nova}
                   onChange={(e) => updateSenha("nova", e.target.value)}
+                  aria-invalid={Boolean(senhaFieldErrors.nova)}
                 />
+                {senhaFieldErrors.nova && <p className="field-error">{senhaFieldErrors.nova}</p>}
               </div>
               <div className="form-group">
                 <label>Confirmar nova senha</label>
-                <input
-                  className="form-input"
-                  type="password"
+                <PasswordInput
+                  inputClassName={`form-input ${senhaFieldErrors.confirmar ? "is-invalid" : ""}`}
                   value={senhaForm.confirmar}
                   onChange={(e) => updateSenha("confirmar", e.target.value)}
+                  aria-invalid={Boolean(senhaFieldErrors.confirmar)}
                 />
+                {senhaFieldErrors.confirmar && <p className="field-error">{senhaFieldErrors.confirmar}</p>}
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

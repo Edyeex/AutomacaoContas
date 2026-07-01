@@ -134,6 +134,13 @@ secure.MapGet("/operators", async (AccountService service, CancellationToken can
 secure.MapGet("/accounts", async (HttpContext context, AccountService service, CancellationToken cancellationToken)
     => (await service.ListAsync(context.User.GetRequiredUserId(), cancellationToken)).ToHttpResult());
 
+secure.MapGet("/accounts/{accountId:guid}/portal-password", async (
+        Guid accountId,
+        HttpContext context,
+        AccountService service,
+        CancellationToken cancellationToken)
+    => (await service.GetPortalPasswordAsync(context.User.GetRequiredUserId(), accountId, cancellationToken)).ToHttpResult());
+
 secure.MapPost("/accounts", async (AccountCreateRequest request, HttpContext context, AccountService service, CancellationToken cancellationToken)
     => (await service.CreateAsync(context.User.GetRequiredUserId(), request, cancellationToken)).ToHttpResult());
 

@@ -1,0 +1,241 @@
+
+--- PAGE 1 ---
+Versão avaliada: AUTODOWNLOAD (5).pdf - 29 páginas Página 1
+ULBRA | ANÁLISE E DESENVOLVIMENTO DE SISTEMAS PDS | PARECER DE ORIENTAÇÃO
+PARECER DE ORIENTAÇÃO ACADÊMICA
+Revisão da quinta versão do Projeto de Desenvolvimento de Software (PDS)
+AUTODOWNLOAD
+Uma aplicação web para automação e gestão de boletos recorrentes
+ACADÊMICO Éder Casagranda
+CURSO Tecnologia em Análise e Desenvolvimento de Sistemas
+DOCUMENTO AVALIADO AUTODOWNLOAD (5).pdf - 29 páginas
+PROFESSOR ORIENTADOR Lucas Fogaça
+DATA DO PARECER 25 de junho de 2026
+CLASSIFICAÇÃO DO PARECER
+APROVADO COM CORREÇÕES OBRIGATÓRIAS
+A versão não está liberada para entrega definitiva. As correções centrais do parecer anterior permanecem sem 
+atendimento suficiente.
+Lucas Fogaça
+Professor Orientador - Análise e Desenvolvimento de Sistemas
+
+--- PAGE 2 ---
+Versão avaliada: AUTODOWNLOAD (5).pdf - 29 páginas Página 2
+ULBRA | ANÁLISE E DESENVOLVIMENTO DE SISTEMAS PDS | PARECER DE ORIENTAÇÃO
+1 OBJETO E ESCOPO DO PARECER
+Este parecer registra a revisão da versão AUTODOWNLOAD (5), considerando o modelo institucional, os três artigos de  
+referência, a versão anterior do texto, o repositório público, o commit acadêmico informado e a aplicação publicada. A análise  
+prioriza coerência entre artigo e software, evidências de validação, metodologia, normalização acadêmica e qualidade da  
+apresentação.
+A comparação documental mostra que a quinta versão recebeu apenas ajustes pontuais. O núcleo das correções obrigatórias  
+já indicado no parecer anterior continua praticamente inalterado.
+2 SÍNTESE DA EVOLUÇÃO
+Alterações efetivamente identificadas em relação à versão anterior:
+• capitalização de “Sim” no quadro de soluções correlatas;
+• substituição de “Dependente do portal externo” por “Validado em ambiente local” na automação real;
+• alteração do título “APÊNDICES SUGERIDOS” para “APÊNDICES”;
+• capitalização de “Etapa” no quadro da jornada do usuário;
+• inclusão de espaço após “Repositório do projeto:” no Apêndice E.
+Essas mudanças melhoram detalhes editoriais, mas não resolvem as pendências de validação, diagramas, recuperação de  
+senha, requisitos, versionamento, modelo de dados, metodologia e referências.
+DIMENSÃO SITUAÇÃO SÍNTESE
+Evolução entre versões Baixa Foram identificadas cinco alterações pontuais, sem 
+reestruturação dos problemas centrais.
+Coerência com o projeto Parcial Arquitetura e tecnologias são coerentes, mas 
+existem divergências funcionais e de modelagem.
+Resultados e validação Insuficiente Há afirmações de aprovação sem evidências 
+reproduzíveis ou mensuráveis.
+ABNT e padrão institucional Parcial Persistem margem esquerda, título, legendas, 
+notas e referências inadequadas.
+Documentação técnica Parcial O hash está informado, mas a tag/release 
+declarada não está publicada.
+Parecer desta etapa Correções obrigatórias A entrega final depende da correção dos itens 
+críticos e da apresentação de evidências.
+
+--- PAGE 3 ---
+Versão avaliada: AUTODOWNLOAD (5).pdf - 29 páginas Página 3
+ULBRA | ANÁLISE E DESENVOLVIMENTO DE SISTEMAS PDS | PARECER DE ORIENTAÇÃO
+2.1 ASPECTOS POSITIVOS IDENTIFICADOS
+• A estrutura acadêmica geral está organizada em introdução, fundamentação, metodologia, desenvolvimento e conclusão.
+• A fundamentação teórica contém citações e aborda engenharia de software, automação, segurança e Design Thinking.
+• O artigo delimita limitações de portais externos, hospedagem gratuita e persistência local dos arquivos.
+• O cabeçalho “APÊNDICES” foi corrigido e o commit acadêmico continua identificado.
+• A arquitetura descrita em camadas é compatível, em linhas gerais, com a organização do repositório.
+3 CORREÇÕES OBRIGATÓRIAS
+3.1 Evidências, validação e coerência técnica
+1. DIAGRAMA DE CASOS DE USO CONTINUA INADEQUADO [CRÍTICA]
+ONDE / TRECHO PARA CTRL+F: Páginas 9 a 11 e 23 a 25 - “Figura - 1: Diagrama casos de uso.”
+COMENTÁRIO DO ORIENTADOR: O título, a figura e a fonte permanecem separados em páginas diferentes. O diagrama está cortado, é 
+repetido no apêndice, utiliza “<>” no lugar de <<include>> e mistura objetivos do usuário com procedimentos internos do sistema.
+POSSÍVEL SOLUÇÃO: Redesenhar o diagrama em página paisagem, manter apenas casos de uso observáveis, usar notação UML correta 
+e posicionar título, figura e fonte na mesma página. Remover a duplicação do apêndice.
+2. AUTOMAÇÃO REAL E AGENDAMENTO CONTINUAM APROVADOS SEM PROVA [CRÍTICA]
+ONDE / TRECHO PARA CTRL+F: Páginas 18 e 19 - Quadro 5, linhas “Automação real” e “Agendamento mensal”.
+COMENTÁRIO DO ORIENTADOR: Trocar o resultado para “Validado em ambiente local” não constitui evidência. Não são informados 
+operadora, data, ambiente, arquivo obtido, registro no banco, histórico ou log. “Agendamento exibido” comprova apenas configuração, não 
+execução automática.
+POSSÍVEL SOLUÇÃO: Apresentar evidência reproduzível com data, cenário, conta de teste, log, arquivo, registro de banco e captura do 
+histórico. Até isso ocorrer, classificar os casos como parcial ou inconclusivo.
+
+--- PAGE 4 ---
+Versão avaliada: AUTODOWNLOAD (5).pdf - 29 páginas Página 4
+ULBRA | ANÁLISE E DESENVOLVIMENTO DE SISTEMAS PDS | PARECER DE ORIENTAÇÃO
+3.1 Evidências, validação e coerência técnica - continuação
+3. TESTES AUTOMATIZADOS SÃO CITADOS SEM RESULTADO COMPROVÁVEL [CRÍTICA]
+ONDE / TRECHO PARA CTRL+F: Páginas 8 e 18 - “testes unitários no backend com xUnit” e “testes automatizados”.
+COMENTÁRIO DO ORIENTADOR: O repositório contém um projeto de testes, porém o artigo não informa comando executado, data, 
+ambiente, total de testes, aprovados, falhos, duração ou cobertura. A existência dos arquivos não comprova a execução.
+POSSÍVEL SOLUÇÃO: Executar a suíte na versão acadêmica e inserir o resultado real do dotnet test, acompanhado de quadro com 
+cenários, resultados e evidência visual.
+4. RECUPERAÇÃO DE SENHA NÃO ESTÁ IMPLEMENTADA COMO DESCRITA [CRÍTICA]
+ONDE / TRECHO PARA CTRL+F: Página 11 - RF10 “Recuperar senha por e-mail com token”; páginas 15 e 27 - “Esqueceu a senha?”.
+COMENTÁRIO DO ORIENTADOR: No commit informado, a solicitação apenas gera uma notificação interna. Não há token, validade, envio 
+de e-mail nem redefinição de senha. A interface publicada continua oferecendo a opção ao usuário.
+POSSÍVEL SOLUÇÃO: Marcar o requisito como “Não implementado” e retirar temporariamente o acesso da interface, ou implementar o fluxo 
+completo com token, expiração, e-mail, redefinição e testes.
+5. CÓDIGOS E CLASSIFICAÇÃO DOS REQUISITOS ESTÃO INCORRETOS [ALTA]
+ONDE / TRECHO PARA CTRL+F: Páginas 11 e 12 - Quadros 2 e 3.
+COMENTÁRIO DO ORIENTADOR: Os requisitos não funcionais continuam identificados como RF01 a RF08, repetindo os funcionais. Além 
+disso, “Proteger rotas da API com JWT” é uma decisão de segurança/implementação, não uma função percebida pelo usuário.
+POSSÍVEL SOLUÇÃO: Renomear para RNF01 a RNF08, mover a proteção JWT para o quadro não funcional e revisar a rastreabilidade 
+entre requisito, implementação e teste.
+
+--- PAGE 5 ---
+Versão avaliada: AUTODOWNLOAD (5).pdf - 29 páginas Página 5
+ULBRA | ANÁLISE E DESENVOLVIMENTO DE SISTEMAS PDS | PARECER DE ORIENTAÇÃO
+3.2 Versionamento, modelagem e aderência institucional
+6. TAG ACADÊMICA DECLARADA NÃO ESTÁ PUBLICADA [ALTA]
+ONDE / TRECHO PARA CTRL+F: Página 29 - “Versão acadêmica/tag: v1.0-pds”.
+COMENTÁRIO DO ORIENTADOR: O hash informado é acessível, mas o repositório público não apresenta tag ou release v1.0-pds no 
+momento da revisão. O texto registra como existente um artefato que não está publicado.
+POSSÍVEL SOLUÇÃO: Criar a tag e uma release acadêmica vinculadas ao commit informado. Caso não seja feito, retirar a indicação de tag 
+e manter apenas o hash.
+7. MODELO DE DADOS NÃO REPRESENTA INTEGRALMENTE O AGENDAMENTO [ALTA]
+ONDE / TRECHO PARA CTRL+F: Páginas 13 e 14 - “Figura - 3: Modelo de dados do AutoDownload”.
+COMENTÁRIO DO ORIENTADOR: A entidade accounts não apresenta IsScheduleEnabled, ScheduleDayOfMonth e ScheduleTime, embora 
+esses campos existam no código e sejam essenciais à funcionalidade de agendamento mensal.
+POSSÍVEL SOLUÇÃO: Atualizar o modelo de dados a partir do mesmo commit acadêmico e conferir todas as entidades, campos, 
+cardinalidades e tipos antes da nova exportação.
+8. MARGEM ESQUERDA E TÍTULO NÃO SEGUEM O MODELO INSTITUCIONAL [ALTA]
+ONDE / TRECHO PARA CTRL+F: Documento inteiro e primeira página.
+COMENTÁRIO DO ORIENTADOR: A exportação mantém margem esquerda próxima de 2 cm, enquanto o modelo exige 3 cm. Apenas 
+“AUTODOWNLOAD:” está em Arial 14 e negrito; o subtítulo aparece em 13, sem negrito e sem caixa alta.
+POSSÍVEL SOLUÇÃO: Configurar A4 com margens 3 cm superior/esquerda e 2 cm inferior/direita. Padronizar o título completo: 
+“AUTODOWNLOAD: UMA APLICAÇÃO WEB PARA AUTOMAÇÃO E GESTÃO DE BOLETOS RECORRENTES”.
+
+--- PAGE 6 ---
+Versão avaliada: AUTODOWNLOAD (5).pdf - 29 páginas Página 6
+ULBRA | ANÁLISE E DESENVOLVIMENTO DE SISTEMAS PDS | PARECER DE ORIENTAÇÃO
+3.3 Figuras, apêndices e evidências visuais
+9. LEGENDAS DE FIGURAS E QUADROS PERMANECEM INCONSISTENTES [ALTA]
+ONDE / TRECHO PARA CTRL+F: “Figura - 1:”, “Figura - 2 -”, “Figura - 01:”, “Figura - C1:” e “Quadro - 2 -”.
+COMENTÁRIO DO ORIENTADOR: Há variação de hífens, dois-pontos, zeros à esquerda e códigos. Algumas legendas e fontes ficam 
+separadas da imagem; a arquitetura da página 12 está pequena e pouco legível.
+POSSÍVEL SOLUÇÃO: Adotar um único padrão: “Figura 1 - Título” e “Quadro 1 - Título”. Manter título, imagem e fonte na mesma página e 
+ampliar diagramas com texto pequeno.
+10. APÊNDICES REPETEM CONTEÚDO DO CORPO E NÃO AGREGAM EVIDÊNCIA [ALTA]
+ONDE / TRECHO PARA CTRL+F: Páginas 23 a 29 - Apêndices B, C e D.
+COMENTÁRIO DO ORIENTADOR: A remoção da palavra “SUGERIDOS” foi correta, mas diagramas e telas continuam duplicados. O 
+apêndice deve aprofundar o texto, não repetir as mesmas figuras.
+POSSÍVEL SOLUÇÃO: Manter no corpo os elementos essenciais e usar os apêndices para artefatos completos: roteiro metodológico, 
+resultados de testes, logs, matriz de rastreabilidade e capturas adicionais.
+11. CAPTURAS DO SISTEMA MOSTRAM ESTADOS VAZIOS [ALTA]
+ONDE / TRECHO PARA CTRL+F: Páginas 15, 16 e 27 a 29 - dashboard, notificações e histórico.
+COMENTÁRIO DO ORIENTADOR: As telas exibem zero contas, zero boletos, nenhuma notificação e nenhum histórico. Elas comprovam a 
+interface, mas não demonstram as funcionalidades e resultados afirmados.
+POSSÍVEL SOLUÇÃO: Inserir uma sequência demonstrativa com conta cadastrada, agendamento ativo, execução concluída, boleto 
+registrado, notificação e histórico. Anonimizar credenciais e dados pessoais.
+
+--- PAGE 7 ---
+Versão avaliada: AUTODOWNLOAD (5).pdf - 29 páginas Página 7
+ULBRA | ANÁLISE E DESENVOLVIMENTO DE SISTEMAS PDS | PARECER DE ORIENTAÇÃO
+3.4 Escopo, metodologia e fundamentação
+12. METODOLOGIA AINDA NÃO É REPRODUTÍVEL [ALTA]
+ONDE / TRECHO PARA CTRL+F: Páginas 7 e 8 - seção 3 Metodologia.
+COMENTÁRIO DO ORIENTADOR: O texto menciona observação, documentos e revisões, mas não informa período, responsável, roteiro, 
+documentos analisados, forma de registro ou procedimento de análise. A persona parece sintética e isso não é explicitado.
+POSSÍVEL SOLUÇÃO: Criar quadro metodológico com fonte, período, instrumento, procedimento, registro e produto gerado. Informar 
+expressamente quando a persona for sintética.
+13. ESCOPO TEXTUAL CONTINUA MAIOR QUE A IMPLEMENTAÇÃO [ALTA]
+ONDE / TRECHO PARA CTRL+F: Páginas 2 e 3 - “internet, energia, água, telefone ou outros serviços”.
+COMENTÁRIO DO ORIENTADOR: O software demonstrado possui estratégias para Vero Internet, RMS Telecom e operador demonstrativo. 
+Não há comprovação de automações de água ou energia.
+POSSÍVEL SOLUÇÃO: Delimitar a versão atual a serviços de internet e telecomunicações. Apresentar outras categorias somente como 
+possibilidade futura.
+14. TRABALHOS CORRELATOS CONTINUAM GENÉRICOS [ALTA]
+ONDE / TRECHO PARA CTRL+F: Páginas 6 e 7 - seção 2.6 e Quadro 1.
+COMENTÁRIO DO ORIENTADOR: “Portais individuais”, “aplicativos bancários” e “planilhas” são categorias, não soluções ou trabalhos 
+identificados. A comparação carece de fontes, critérios e referências específicas.
+POSSÍVEL SOLUÇÃO: Selecionar sistemas ou estudos concretos, citá-los no padrão autor-data, informar critérios de comparação e 
+completar a referência do AutoBot com autor, versão/commit e licença.
+
+--- PAGE 8 ---
+Versão avaliada: AUTODOWNLOAD (5).pdf - 29 páginas Página 8
+ULBRA | ANÁLISE E DESENVOLVIMENTO DE SISTEMAS PDS | PARECER DE ORIENTAÇÃO
+3.5 Referências, redação e força das conclusões
+15. REFERÊNCIAS E CITAÇÕES AINDA ESTÃO INCOMPLETAS [ALTA]
+ONDE / TRECHO PARA CTRL+F: Página 21 - REFERÊNCIAS e fundamentação.
+COMENTÁRIO DO ORIENTADOR: Brown permanece incompleto. Documentações da Microsoft e Vercel aparecem nas referências sem 
+citação clara no corpo. Citações de material online não seguem integralmente o padrão indicado pelo modelo.
+POSSÍVEL SOLUÇÃO: Completar dados bibliográficos, relacionar cada referência a uma citação no texto, retirar itens não utilizados e incluir 
+o repositório do projeto com commit e data de acesso.
+16. RESUMO E CONCLUSÃO EXCEDEM A EVIDÊNCIA APRESENTADA [ALTA]
+ONDE / TRECHO PARA CTRL+F: Resumo - “contribui para reduzir tarefas repetitivas”; conclusão - “os resultados indicam”.
+COMENTÁRIO DO ORIENTADOR: Não há medição de tempo, comparação antes/depois, amostra de usuários ou evidência suficiente da 
+execução real. Portanto, a redução de esforço é uma expectativa plausível, mas não um resultado comprovado.
+POSSÍVEL SOLUÇÃO: Substituir por formulações cautelosas, como “apresenta potencial para reduzir”, ou realizar avaliação mensurável 
+com critérios, participantes e resultados.
+17. ERROS TEXTUAIS E PALAVRAS-CHAVE AINDA PRECISAM DE REVISÃO [MÉDIA]
+ONDE / TRECHO PARA CTRL+F: Página 2 - nota do orientador e palavras-chave.
+COMENTÁRIO DO ORIENTADOR: Persistem “Tecnologias Digitais Aplicada a Educação”, “Analise e Desenvolvimento de Sistemas” e 
+“NET”. Há sete palavras-chave, número excessivo para este texto.
+POSSÍVEL SOLUÇÃO: Corrigir para “Tecnologias Digitais Aplicadas à Educação”, “Análise e Desenvolvimento de Sistemas” e “.NET”. 
+Manter de três a cinco palavras-chave representativas.
+4 ORDEM RECOMENDADA DE CORREÇÃO
+ORDEM AÇÃO RESULTADO ESPERADO
+1 Refazer diagrama e eliminar duplicação Figura legível, completa, UML correta e fonte na mesma 
+página.
+2 Reformular validação e anexar evidências Automação e agendamento comprovados ou 
+classificados como parciais.
+3 Executar e registrar testes Saída real do dotnet test e matriz de casos.
+4 Corrigir recuperação de senha e requisitos Escopo funcional compatível com o código.
+5 Criar release/tag ou corrigir o apêndice Versão acadêmica verificável no repositório.
+6 Atualizar modelo de dados Campos de agendamento representados.
+7 Revisar metodologia, escopo e referências Texto reproduzível e academicamente fundamentado.
+8 Finalizar formatação institucional Margens, título, legendas, notas e palavras-chave 
+padronizados.
+
+--- PAGE 9 ---
+Versão avaliada: AUTODOWNLOAD (5).pdf - 29 páginas Página 9
+ULBRA | ANÁLISE E DESENVOLVIMENTO DE SISTEMAS PDS | PARECER DE ORIENTAÇÃO
+5 CHECKLIST PARA A PRÓXIMA SUBMISSÃO
+ ☐ Redesenhar o diagrama de casos de uso e mantê-lo integralmente em uma página.
+ ☐ Corrigir <<include>>, atores, casos de uso internos e legenda da figura.
+ ☐ Apresentar evidências da automação real e da execução automática do agendamento.
+ ☐ Executar a suíte de testes e registrar comando, ambiente, totais e resultado.
+ ☐ Marcar recuperação de senha como não implementada ou concluir o fluxo completo.
+ ☐ Renomear RFs não funcionais para RNF e revisar a classificação dos requisitos.
+ ☐ Criar a tag/release v1.0-pds ou retirar essa informação do artigo.
+ ☐ Atualizar o modelo de dados com os campos de agendamento.
+ ☐ Substituir capturas vazias por uma sequência demonstrativa com dados anonimizados.
+ ☐ Completar metodologia com período, instrumentos, procedimento e análise.
+ ☐ Delimitar o escopo atual a internet e telecomunicações.
+ ☐ Reformular os trabalhos correlatos com soluções e fontes identificadas.
+ ☐ Revisar citações, referências, nota do orientador e palavras-chave.
+ ☐ Configurar margens institucionais e padronizar títulos, figuras e quadros.
+6 DOCUMENTOS E EVIDÊNCIAS RECOMENDADOS
+Na próxima entrega, acompanhar o PDF revisado com: relatório ou captura do dotnet test; evidência da automação real;  
+evidência da execução agendada; matriz de rastreabilidade requisito-teste; diagrama atualizado; versão acadêmica publicada;  
+e telas preenchidas com dados anonimizados.
+7 BASES VERIFICADAS NESTE PARECER
+• AUTODOWNLOAD (5).pdf, com 29 páginas;
+• MODELO_ARTIGO e três artigos de referência disponibilizados;
+• repositório público Edyeex/AutomacaoContas e commit 6cc09724a6c5e1ba0c85abe6ea7c0b5e6ed88858;
+• aplicação publicada em automacao-contas.vercel.app;
+• páginas públicas de tags e releases do repositório, consultadas em 25 de junho de 2026.
+PARECER FINAL DESTA ETAPA
+APROVADO COM CORREÇÕES OBRIGATÓRIAS
+A evolução desta versão foi predominantemente editorial. A autorização para entrega final depende da correção dos itens 
+críticos e da apresentação de evidências técnicas verificáveis.
+Lucas Fogaça
+Professor Orientador - Análise e Desenvolvimento de Sistemas
+25 de junho de 2026

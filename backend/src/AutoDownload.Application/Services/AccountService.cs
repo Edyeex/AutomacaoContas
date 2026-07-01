@@ -48,6 +48,27 @@ public sealed class AccountService
         return Result<IReadOnlyList<AccountResponse>>.Success(await MapAccountsAsync(list, cancellationToken));
     }
 
+    public async Task<Result<AccountPortalPasswordResponse>> GetPortalPasswordAsync(Guid userId, Guid accountId, CancellationToken cancellationToken = default)
+    {
+        var account = await accounts.FindByIdForUserAsync(userId, accountId, cancellationToken);
+        if (account is null)
+        {
+            return Result<AccountPortalPasswordResponse>.Failure(Error.NotFound("account.not_found", "Account not found."));
+        }
+
+        try
+        {
+            var portalPassword = credentialProtector.Unprotect(account.EncryptedPortalPassword);
+            return Result<AccountPortalPasswordResponse>.Success(new AccountPortalPasswordResponse(portalPassword));
+        }
+        catch (Exception)
+        {
+            return Result<AccountPortalPasswordResponse>.Failure(Error.Failure(
+                "account.portal_password_unreadable",
+                "Nao foi possivel ler a senha cadastrada. Edite a conta e informe a senha novamente."));
+        }
+    }
+
     public async Task<Result<AccountResponse>> CreateAsync(Guid userId, AccountCreateRequest request, CancellationToken cancellationToken = default)
     {
         if (await accounts.CountActiveByUserAsync(userId, cancellationToken) >= UserAccount.MaxActiveAccountsPerUser)

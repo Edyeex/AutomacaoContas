@@ -4,9 +4,12 @@ import { apiRequest } from "../../lib/apiClient";
 import { useApiResource } from "../../lib/useApiResource";
 import { publishDashboardCountsChanged } from "../../lib/dashboardState";
 import { fetchUnreadCount, publishUnreadCount } from "../../lib/notificationState";
+import OperatorLogo from "../../components/OperatorLogo";
+import PasswordInput from "../../components/PasswordInput";
 
 const AUTOMATION_RUN_TIMEOUT_MS = 210000;
 const AUTOMATION_SLOW_NOTICE_SECONDS = 45;
+const SAVED_PASSWORD_MASK = "********";
 
 function formatDate(d) {
   return d ? new Date(d).toLocaleDateString("pt-BR") : "-";
@@ -30,14 +33,20 @@ export default function ContasPage() {
   const [modal, setModal] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [scheduleItem, setScheduleItem] = useState(null);
+  const [confirmation, setConfirmation] = useState(null);
+  const [confirmationBusy, setConfirmationBusy] = useState(false);
   const [form, setForm] = useState({ operadoraId: "", login: "", senha: "", unidade: "" });
   const [scheduleForm, setScheduleForm] = useState({ enabled: true, mode: "day", day: "1", time: "09:00" });
   const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [scheduleFieldErrors, setScheduleFieldErrors] = useState({});
   const [pageMessage, setPageMessage] = useState("");
   const [pageMessageType, setPageMessageType] = useState("info");
+  const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [runningAccountId, setRunningAccountId] = useState(null);
   const [runningSeconds, setRunningSeconds] = useState(0);
   const accountCount = list.length;
+  const selectedOperator = apiOperadoras.find((op) => String(op.id) === form.operadoraId);
 
   useEffect(() => {
     setList(apiContas || []);
@@ -61,6 +70,8 @@ export default function ContasPage() {
     clearPageMessage();
     setForm({ operadoraId: "", login: "", senha: "", unidade: "" });
     setFormError("");
+    setFieldErrors({});
+    setOperatorPickerOpen(false);
     setEditItem(null);
     setModal("add");
   }
@@ -70,10 +81,12 @@ export default function ContasPage() {
     setForm({
       operadoraId: String(conta.operadoraId),
       login: conta.loginPortal,
-      senha: "",
+      senha: SAVED_PASSWORD_MASK,
       unidade: conta.unidadeConsumidora,
     });
     setFormError("");
+    setFieldErrors({});
+    setOperatorPickerOpen(false);
     setEditItem(conta);
     setModal("edit");
   }
@@ -88,25 +101,61 @@ export default function ContasPage() {
       time: String(conta.horarioAgendamento || "09:00").slice(0, 5),
     });
     setFormError("");
+    setScheduleFieldErrors({});
   }
 
   function closeModal() {
     setModal(null);
     setEditItem(null);
     setFormError("");
+    setFieldErrors({});
+    setOperatorPickerOpen(false);
   }
 
   function closeSchedule() {
     setScheduleItem(null);
     setFormError("");
+    setScheduleFieldErrors({});
+  }
+
+  function closeConfirmation() {
+    if (confirmationBusy) return;
+    setConfirmation(null);
   }
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => ({ ...prev, [field]: "" }));
+  }
+
+  async function revealPortalPassword() {
+    if (modal !== "edit" || !editItem || form.senha !== SAVED_PASSWORD_MASK) {
+      return;
+    }
+
+    if (usingFallback) {
+      setFormError("A senha real só pode ser exibida quando o backend estiver conectado.");
+      throw new Error("Backend indisponível.");
+    }
+
+    try {
+      setFormError("");
+      const response = await apiRequest(`/accounts/${editItem.id}/portal-password`);
+      update("senha", response?.senhaPortal || "");
+    } catch (err) {
+      setFormError(err.message || "Não foi possível exibir a senha cadastrada.");
+      throw err;
+    }
+  }
+
+  function selectOperator(op) {
+    update("operadoraId", String(op.id));
+    setOperatorPickerOpen(false);
   }
 
   function updateSchedule(field, value) {
     setScheduleForm((prev) => ({ ...prev, [field]: value, enabled: true }));
+    setScheduleFieldErrors((prev) => ({ ...prev, [field]: "" }));
   }
 
   function showPageMessage(message, type = "warning") {
@@ -119,15 +168,50 @@ export default function ContasPage() {
     setPageMessageType("info");
   }
 
-  async function handleSave(e) {
-    e.preventDefault();
+  function validateAccountForm() {
     setFormError("");
     const op = apiOperadoras.find((o) => String(o.id) === form.operadoraId);
-    if (!op || !form.login || !form.unidade || (modal === "add" && !form.senha)) {
-      setFormError("Preencha os campos obrigatórios.");
+    const nextFieldErrors = {};
+
+    if (!op) {
+      nextFieldErrors.operadoraId = "Operadora é obrigatória.";
+    }
+
+    if (!form.login.trim()) {
+      nextFieldErrors.login = "Login no portal é obrigatório.";
+    }
+
+    if (modal === "add" && !form.senha) {
+      nextFieldErrors.senha = "Senha do portal é obrigatória.";
+    }
+
+    if (!form.unidade.trim()) {
+      nextFieldErrors.unidade = "Documento/contrato da conta é obrigatório.";
+    }
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      setFormError("Revise os campos obrigatórios destacados.");
+      return null;
+    }
+
+    return op;
+  }
+
+  async function handleSave(e) {
+    e.preventDefault();
+    const op = validateAccountForm();
+    if (!op) return;
+
+    if (modal === "edit") {
+      setConfirmation({ type: "edit", conta: editItem });
       return;
     }
 
+    await persistAccount(op);
+  }
+
+  async function persistAccount(op) {
     if (usingFallback) {
       saveLocally(op);
       closeModal();
@@ -138,7 +222,7 @@ export default function ContasPage() {
       const body = {
         operadoraId: op.id,
         loginPortal: form.login,
-        senhaPortal: form.senha || null,
+        senhaPortal: modal === "edit" && form.senha === SAVED_PASSWORD_MASK ? null : form.senha || null,
         unidadeConsumidora: form.unidade,
       };
 
@@ -161,9 +245,19 @@ export default function ContasPage() {
     e.preventDefault();
     setFormError("");
     const day = Number(scheduleForm.day);
+    const nextFieldErrors = {};
 
     if (scheduleForm.enabled && scheduleForm.mode === "day" && (!Number.isInteger(day) || day < 1 || day > 31)) {
-      setFormError("Informe um dia entre 1 e 31.");
+      nextFieldErrors.day = "Dia do mês deve ser entre 1 e 31.";
+    }
+
+    if (scheduleForm.enabled && !scheduleForm.time) {
+      nextFieldErrors.time = "Horário é obrigatório.";
+    }
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setScheduleFieldErrors(nextFieldErrors);
+      setFormError("Revise os campos destacados.");
       return;
     }
 
@@ -240,6 +334,33 @@ export default function ContasPage() {
       await refreshUnreadCount();
     } catch (err) {
       showPageMessage(err.message || "Não foi possível remover a conta.");
+    }
+  }
+
+  function requestRemove(conta) {
+    if (runningAccountId) return;
+    clearPageMessage();
+    setConfirmation({ type: "remove", conta });
+  }
+
+  async function confirmAccountOperation() {
+    if (!confirmation) return;
+
+    setConfirmationBusy(true);
+    try {
+      if (confirmation.type === "edit") {
+        const op = validateAccountForm();
+        if (op) {
+          await persistAccount(op);
+        }
+      }
+
+      if (confirmation.type === "remove") {
+        await handleRemove(confirmation.conta.id);
+      }
+    } finally {
+      setConfirmationBusy(false);
+      setConfirmation(null);
     }
   }
 
@@ -374,7 +495,7 @@ export default function ContasPage() {
               <div key={conta.id} className={`account-card ${runningAccountId === conta.id ? "is-running" : ""}`}>
                 <div className="account-card-header">
                   <div className="account-card-title">
-                    <div className="account-icon">{conta.icon}</div>
+                    <OperatorLogo operator={conta} icon={conta.icon} className="account-icon" />
                     <div>
                       <h4>{conta.operadora}</h4>
                       <span>{conta.tipo}</span>
@@ -394,7 +515,7 @@ export default function ContasPage() {
                     <button className="btn btn-secondary btn-sm" onClick={() => openSchedule(conta)} disabled={Boolean(runningAccountId)}>
                       Agendar
                     </button>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleRemove(conta.id)} disabled={Boolean(runningAccountId)}>
+                    <button className="btn btn-danger btn-sm" onClick={() => requestRemove(conta)} disabled={Boolean(runningAccountId)}>
                       Remover
                     </button>
                   </div>
@@ -410,7 +531,7 @@ export default function ContasPage() {
                   <span className="account-detail-value">{conta.loginPortal}</span>
                 </div>
                 <div className="account-detail">
-                  <span className="account-detail-label">Identificador</span>
+                  <span className="account-detail-label">Documento/contrato</span>
                   <span className="account-detail-value">{conta.unidadeConsumidora}</span>
                 </div>
                 <div className="account-detail">
@@ -462,49 +583,102 @@ export default function ContasPage() {
                 )}
                 <div className="form-group">
                   <label>Operadora</label>
-                  <select
-                    className="form-select"
-                    value={form.operadoraId}
-                    onChange={(e) => update("operadoraId", e.target.value)}
-                  >
-                    <option value="">Selecione...</option>
-                    {apiOperadoras.map((op) => (
-                      <option key={op.id} value={op.id}>
-                        {op.icon} {op.name} ({op.type})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="operator-picker">
+                    <button
+                      type="button"
+                      className={`operator-picker-trigger ${fieldErrors.operadoraId ? "is-invalid" : ""}`}
+                      onClick={() => setOperatorPickerOpen((current) => !current)}
+                      aria-expanded={operatorPickerOpen}
+                      aria-invalid={Boolean(fieldErrors.operadoraId)}
+                    >
+                      <span className="operator-picker-value">
+                        {selectedOperator ? (
+                          <>
+                            <OperatorLogo operator={selectedOperator} icon={selectedOperator.icon} size="sm" />
+                            <span>{selectedOperator.name} ({selectedOperator.type})</span>
+                          </>
+                        ) : (
+                          <span>Selecione...</span>
+                        )}
+                      </span>
+                      <span className="operator-picker-chevron" aria-hidden="true">⌄</span>
+                    </button>
+
+                    {operatorPickerOpen && (
+                      <div className="operator-picker-list" role="listbox">
+                        {apiOperadoras.map((op) => (
+                          <button
+                            key={op.id}
+                            type="button"
+                            className={`operator-picker-option ${String(op.id) === form.operadoraId ? "is-selected" : ""}`}
+                            onClick={() => selectOperator(op)}
+                            role="option"
+                            aria-selected={String(op.id) === form.operadoraId}
+                          >
+                            <span className="operator-picker-option-content">
+                              <OperatorLogo operator={op} icon={op.icon} size="sm" />
+                              <span>{op.name}</span>
+                            </span>
+                            <span className="operator-picker-type">{op.type}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {selectedOperator && (
+                    <div className="operator-picker-preview">
+                      <OperatorLogo operator={selectedOperator} icon={selectedOperator.icon} size="sm" />
+                      <span>Operadora selecionada: {selectedOperator.name}</span>
+                    </div>
+                  )}
+                  {fieldErrors.operadoraId && <p className="field-error">{fieldErrors.operadoraId}</p>}
                 </div>
                 <div className="form-group">
                   <label>Login no portal</label>
                   <input
-                    className="form-input"
+                    className={`form-input ${fieldErrors.login ? "is-invalid" : ""}`}
                     type="text"
                     value={form.login}
                     onChange={(e) => update("login", e.target.value)}
                     placeholder="Usuário ou e-mail do portal"
+                    aria-invalid={Boolean(fieldErrors.login)}
                   />
+                  {fieldErrors.login && <p className="field-error">{fieldErrors.login}</p>}
                 </div>
                 <div className="form-group">
                   <label>Senha do portal</label>
-                  <input
-                    className="form-input"
-                    type="password"
+                  <PasswordInput
+                    inputClassName={`form-input ${fieldErrors.senha ? "is-invalid" : ""}`}
                     value={form.senha}
                     onChange={(e) => update("senha", e.target.value)}
-                    placeholder={modal === "edit" ? "Deixe em branco para manter" : "Senha de acesso"}
+                    onFocus={() => {
+                      if (modal === "edit" && form.senha === SAVED_PASSWORD_MASK) {
+                        update("senha", "");
+                      }
+                    }}
+                    onReveal={modal === "edit" ? revealPortalPassword : undefined}
+                    placeholder={modal === "edit" ? "Informe uma nova senha para alterar" : "Senha de acesso"}
+                    aria-invalid={Boolean(fieldErrors.senha)}
                   />
-                  <p className="form-hint">Armazenada com criptografia. Nunca será exibida.</p>
+                  {fieldErrors.senha && <p className="field-error">{fieldErrors.senha}</p>}
+                  <p className="form-hint">
+                    {modal === "edit"
+                      ? "Senha cadastrada. Clique no olho para visualizar ou no campo para trocar."
+                      : "Armazenada com criptografia. Nunca será exibida."}
+                  </p>
                 </div>
                 <div className="form-group">
-                  <label>Identificador (UC, matrícula, contrato...)</label>
+                  <label>Documento/contrato da conta</label>
                   <input
-                    className="form-input"
+                    className={`form-input ${fieldErrors.unidade ? "is-invalid" : ""}`}
                     type="text"
                     value={form.unidade}
                     onChange={(e) => update("unidade", e.target.value)}
-                    placeholder="Ex: UC-123456"
+                    placeholder="CPF, UC, matrícula ou contrato"
+                    aria-invalid={Boolean(fieldErrors.unidade)}
                   />
+                  {fieldErrors.unidade && <p className="field-error">{fieldErrors.unidade}</p>}
+                  <p className="form-hint">Usado pela automação quando o portal pede um documento ou código da conta.</p>
                 </div>
               </div>
               <div className="modal-footer">
@@ -566,13 +740,15 @@ export default function ContasPage() {
                   <div className="form-group">
                     <label>Dia do mês</label>
                     <input
-                      className="form-input"
+                      className={`form-input ${scheduleFieldErrors.day ? "is-invalid" : ""}`}
                       type="number"
                       min="1"
                       max="31"
                       value={scheduleForm.day}
                       onChange={(e) => updateSchedule("day", e.target.value)}
+                      aria-invalid={Boolean(scheduleFieldErrors.day)}
                     />
+                    {scheduleFieldErrors.day && <p className="field-error">{scheduleFieldErrors.day}</p>}
                     <p className="form-hint">Em meses mais curtos, será usado o último dia disponível.</p>
                   </div>
                 )}
@@ -580,11 +756,13 @@ export default function ContasPage() {
                 <div className="form-group">
                   <label>Horário</label>
                   <input
-                    className="form-input"
+                    className={`form-input ${scheduleFieldErrors.time ? "is-invalid" : ""}`}
                     type="time"
                     value={scheduleForm.time}
                     onChange={(e) => updateSchedule("time", e.target.value)}
+                    aria-invalid={Boolean(scheduleFieldErrors.time)}
                   />
+                  {scheduleFieldErrors.time && <p className="field-error">{scheduleFieldErrors.time}</p>}
                 </div>
 
                 {scheduleItem.agendamentoAtivo && (
@@ -598,6 +776,53 @@ export default function ContasPage() {
                 <button type="submit" className="btn btn-primary">Salvar agendamento</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {confirmation && (
+        <div className="modal-overlay" onClick={closeConfirmation}>
+          <div className="modal modal-confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{confirmation.type === "edit" ? "Salvar alterações?" : "Remover conta?"}</h2>
+              <button className="modal-close" onClick={closeConfirmation} disabled={confirmationBusy} aria-label="Fechar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="confirm-message">
+                {confirmation.type === "edit"
+                  ? "Deseja realmente salvar as alterações desta conta?"
+                  : "Deseja realmente remover esta conta? Essa operação também remove os dados vinculados a ela no sistema."}
+              </p>
+              <div className="confirm-account-summary">
+                <OperatorLogo operator={confirmation.conta} icon={confirmation.conta.icon} size="sm" />
+                <div>
+                  <strong>{confirmation.conta.operadora}</strong>
+                  <span>{confirmation.conta.loginPortal}</span>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={closeConfirmation} disabled={confirmationBusy}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={`btn ${confirmation.type === "remove" ? "btn-danger" : "btn-primary"}`}
+                onClick={confirmAccountOperation}
+                disabled={confirmationBusy}
+              >
+                {confirmationBusy
+                  ? "Processando..."
+                  : confirmation.type === "edit"
+                    ? "Sim, salvar"
+                    : "Sim, remover"}
+              </button>
+            </div>
           </div>
         </div>
       )}

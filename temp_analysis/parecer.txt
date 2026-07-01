@@ -1,0 +1,335 @@
+
+--- PAGE 1 ---
+ULBRA  |  ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
+PARECER - AUTODOWNLOAD  |  1 / 9
+PARECER DE ORIENTAÇÃO ACADÊMICA
+Projeto de Desenvolvimento de Software (PDS)
+AUTODOWNLOAD
+Aplicação web para automação e gestão de boletos recorrentes
+Acadêmico Éder Casagranda
+Curso Tecnologia em Análise e Desenvolvimento de 
+Sistemas
+Documento avaliado Artigo PDS - AUTODOWNLOAD (16 páginas)
+Orientador indicado no artigo Lucas Fogaça
+Responsável por este parecer
+CLASSIFICAÇÃO DO PARECER: REVISÃO MAIOR
+Não recomendado para entrega final nesta versão. O artigo deve retornar para correções acadêmicas, 
+técnicas e formais.
+25 de junho de 2026
+Lucas Fogaça
+Lucas Fogaça
+Professor Orientador - Análise e Desenvolvimento de Sistemas
+
+--- PAGE 2 ---
+ULBRA  |  ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
+PARECER - AUTODOWNLOAD  |  2 / 9
+1 OBJETO E ESCOPO DO PARECER
+Este parecer registra a revisão acadêmica e técnica do artigo AUTODOWNLOAD, considerando o modelo  
+institucional  de  artigo,  boas  práticas  observadas  nos  artigos  de  referência,  coerência  textual,  normas  
+acadêmicas, evidências apresentadas no documento e compatibilidade entre a dissertação e os insumos  
+técnicos associados ao projeto.
+Insumos  considerados:  artigo  AUTODOWNLOAD;  MODELO_ARTIGO  2026/1;  ARTIGO_EXEMPLO1,  
+ARTIGO_EXEMPLO2  e  ARTIGO_EXEMPLO3;  repositório  e  aplicação  indicados  pelo  próprio  artigo.  A  
+análise  do  código  corresponde  à  versão  disponível  no  momento  da  revisão.  Como  o  repositório  não  
+apresenta uma release acadêmica fixada, alterações posteriores podem modificar os achados técnicos.
+Repositório informado: github.com/Edyeex/AutomacaoContas
+Aplicação informada: automacao-contas.vercel.app
+2 SÍNTESE DO PARECER
+O  projeto  apresenta  problema  relevante,  arquitetura  promissora  e  boa  organização  geral  da 
+solução.  Entretanto, o artigo ainda não demonstra rigor acadêmico suficiente para entrega final: a  
+fundamentação  carece  de  citações,  a  metodologia  não  comprova  população,  amostra  e  coleta,  a  
+validação não apresenta resultados mensuráveis e algumas funcionalidades descritas divergem da  
+versão do código verificada. As correções críticas devem ser resolvidas antes de nova submissão.
+2.1 Quadro-síntese da avaliação
+Dimensão Avaliação Síntese
+Coerência com o projeto e o repositório Parcialmente atendida A arquitetura geral é coerente, mas há 
+divergências funcionais e de escopo.
+Fundamentação teórica Insuficiente A seção conceitual não apresenta 
+citações no corpo e não discute 
+trabalhos correlatos.
+Metodologia científica Insuficiente População, amostra, instrumentos, 
+participantes e análise não estão 
+comprovados.
+Resultados e validação Insuficiente Há descrição de funcionalidades, mas 
+faltam evidências, métricas e 
+resultados dos testes.
+ABNT, referências e apresentação Parcialmente atendida Estrutura geral adequada, com falhas 
+em citações, referências, figuras e 
+elementos pré-textuais.
+Viabilidade técnica Promissora O sistema demonstra boa base 
+tecnológica, mas precisa explicitar 
+limitações e corrigir inconsistências.
+2.2 Aspectos positivos identificados
+• A introdução apresenta o problema, o objetivo geral, objetivos específicos, justificativa e organização do 
+artigo.
+• O resumo possui extensão adequada, está em parágrafo único e contempla tema, objetivo, método, 
+resultado e conclusão.
+• A descrição de .NET 10, PostgreSQL, Entity Framework Core, arquitetura em camadas, Repository, 
+Strategy, Selenium e testes xUnit é, em linhas gerais, coerente com a estrutura do projeto.
+• O texto reconhece limitações decorrentes de portais externos, hospedagem e necessidade de 
+manutenção contínua.
+• A separação entre automação demonstrativa e estratégias reais é uma decisão pertinente para 
+apresentação, desde que o artigo delimite claramente o que foi efetivamente validado.
+
+--- PAGE 3 ---
+ULBRA  |  ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
+PARECER - AUTODOWNLOAD  |  3 / 9
+3 PENDÊNCIAS E CORREÇÕES REQUERIDAS
+Os comentários abaixo estão organizados para uso direto na revisão do documento. Em cada item são  
+indicados  o  local  do  problema,  o  comentário  do  orientador  e  uma  possível  solução.  As  prioridades  
+classificadas como CRÍTICA e ALTA devem ser tratadas antes da revisão final de forma.
+3.1 Elementos pré-textuais e delimitação inicial
+1. Título pouco informativo   [MÉDIA]
+ONDE / TRECHO PARA CTRL+F: Página 1 - título “AUTODOWNLOAD”.
+COMENTÁRIO DO ORIENTADOR: O título está excessivamente genérico e não comunica com precisão o 
+objeto científico e o recorte do trabalho.
+POSSÍVEL SOLUÇÃO: Substituir por um título descritivo, por exemplo: “AUTODOWNLOAD: APLICAÇÃO 
+WEB PARA AUTOMAÇÃO E GESTÃO DE BOLETOS RECORRENTES”.
+3. Inconsistência entre resumo, metodologia e estágio real do sistema   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Resumo - “A metodologia adotada foi aplicada, de caráter qualitativo e 
+descritivo” e “obteve-se um sistema web funcional”.
+COMENTÁRIO DO ORIENTADOR: A metodologia também classifica o estudo como exploratório. Além disso, 
+a expressão “sistema web funcional” não diferencia a automação demonstrativa das integrações dependentes 
+de portais reais.
+POSSÍVEL SOLUÇÃO: Uniformizar a classificação metodológica e declarar com precisão que foi obtido um 
+protótipo funcional, discriminando quais fluxos foram demonstrativos e quais integrações reais foram 
+efetivamente validadas.
+3.2 Fundamentação e metodologia
+4. Fundamentação teórica sem citações   [CRÍTICA]
+ONDE / TRECHO PARA CTRL+F: Páginas 3 a 6 - toda a seção “2 FUNDAMENTAÇÃO TEÓRICA”.
+COMENTÁRIO DO ORIENTADOR: A seção apresenta conceitos e afirmações acadêmicas sem qualquer 
+citação autor-data. A presença das obras apenas na lista de referências não fundamenta o texto. O modelo 
+institucional exige citações diretas ou indiretas nessa seção.
+POSSÍVEL SOLUÇÃO: Inserir citações para sistemas de informação, automação, Selenium, segurança, 
+LGPD, arquitetura em camadas, SOLID, Repository, Strategy e Design Thinking, observando o padrão 
+adotado pelo modelo.
+2. Identificação acadêmica incompleta   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Página 1 - "Aluno: Éder Casagranda" e "Orientador: Lucas Fogaça".
+COMENTÁRIO DO ORIENTADOR: A identificação não segue integralmente o modelo institucional, que
+solicita o nome do acadêmico e do orientador com notas de rodapé contendo titulação, e-mail e disciplina. O
+nome do orientador está corretamente informado como Lucas Fogaça.
+POSSÍVEL SOLUÇÃO: Manter Lucas Fogaça como orientador e inserir as informações completas do
+acadêmico e do professor em notas de rodapé, conforme o MODELO_ARTIGO.
+
+--- PAGE 4 ---
+ULBRA  |  ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
+PARECER - AUTODOWNLOAD  |  4 / 9
+5. Ausência de trabalhos correlatos   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Seção 2 - subseções 2.1 a 2.4.
+COMENTÁRIO DO ORIENTADOR: Não são apresentados estudos ou sistemas correlatos, nem comparação 
+com soluções existentes. Assim, a lacuna que o AutoDownload pretende preencher não fica demonstrada.
+POSSÍVEL SOLUÇÃO: Criar a subseção “2.5 Trabalhos correlatos” e comparar soluções por critérios como 
+centralização, automação, histórico, notificações, segurança, integrações e limitações.
+6. População e amostra não comprovadas   [CRÍTICA]
+ONDE / TRECHO PARA CTRL+F: Página 6 - “A população considerada...” e “A amostra foi definida de forma 
+intencional...”.
+COMENTÁRIO DO ORIENTADOR: O artigo não informa quantidade de participantes, critérios de inclusão, 
+recrutamento, perfil dos participantes, instrumento, período ou procedimento de coleta. Uma persona ou um 
+“perfil de usuário comum” não constitui amostra de pesquisa.
+POSSÍVEL SOLUÇÃO: Apresentar os participantes e instrumentos efetivamente utilizados ou reformular o 
+estudo como pesquisa aplicada de desenvolvimento tecnológico, removendo afirmações sobre população e 
+amostra que não possam ser comprovadas.
+7. Coleta e análise de dados não reprodutíveis   [CRÍTICA]
+ONDE / TRECHO PARA CTRL+F: Páginas 6 e 7 - “A coleta de dados ocorreu a partir de documentos de 
+proposta...” e “observação do fluxo manual”.
+COMENTÁRIO DO ORIENTADOR: A coleta é descrita de forma genérica. Não se informa quais documentos 
+foram analisados, quem realizou a observação, em que contexto, quando ocorreu, qual roteiro foi usado nem 
+como os dados foram transformados em requisitos.
+POSSÍVEL SOLUÇÃO: Informar documentos, participantes, datas, contexto, roteiro, registros produzidos e 
+técnica de análise. Inserir instrumentos e evidências nos apêndices.
+8. Uso de Design Thinking sem artefatos comprobatórios   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Subseção 2.4 e seção 3 - “combinou Design Thinking”.
+COMENTÁRIO DO ORIENTADOR: O artigo declara a aplicação de Design Thinking, mas não apresenta 
+entrevista, mapa de empatia, jornada, definição do problema, registros de ideação ou teste com usuários.
+POSSÍVEL SOLUÇÃO: Anexar os artefatos efetivamente produzidos. Caso a abordagem não tenha sido 
+aplicada integralmente, substituir por “o desenvolvimento foi inspirado em etapas do Design Thinking”.
+3.3 Escopo, modelagem, prototipação e documentação
+9. Escopo declarado mais amplo que a implementação   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Introdução - “contas de internet, energia, água, telefone ou outros 
+serviços”.
+COMENTÁRIO DO ORIENTADOR: O escopo textual abrange várias categorias, mas a versão do repositório 
+verificada apresenta estratégias para Operador Demo, Vero Internet e RMS Telecom. Não há evidência de 
+integrações com água ou energia.
+POSSÍVEL SOLUÇÃO: Delimitar o escopo atual a portais de telecomunicações ou esclarecer que água, 
+energia e outras categorias representam possibilidades futuras da arquitetura.
+
+--- PAGE 5 ---
+ULBRA  |  ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
+PARECER - AUTODOWNLOAD  |  5 / 9
+10. Prototipação confundida com implementação   [MÉDIA]
+ONDE / TRECHO PARA CTRL+F: Página 11 - subseção 4.3, “A prototipação foi realizada diretamente na 
+aplicação frontend”.
+COMENTÁRIO DO ORIENTADOR: Construir a interface diretamente no código não comprova, por si só, uma 
+etapa de prototipação. Não são apresentados protótipos, versões preliminares, fluxos ou critérios de validação 
+visual.
+POSSÍVEL SOLUÇÃO: Caracterizar a solução como protótipo codificado de alta fidelidade e incluir capturas 
+das versões inicial e final, fluxos, decisões de interface e alterações realizadas.
+11. Figura 1 com problemas de legibilidade, legenda e fonte   [MÉDIA]
+ONDE / TRECHO PARA CTRL+F: Páginas 9 e 10 - diagrama e legenda “Figura - 1: Diagrama casos de uso.”
+COMENTÁRIO DO ORIENTADOR: O diagrama ocupa praticamente a página inteira, possui fundo escuro, 
+texto pequeno e excesso de linhas. A legenda ficou na página seguinte, apresenta redação inadequada e não 
+informa a fonte.
+POSSÍVEL SOLUÇÃO: Redesenhar com fundo claro e menos elementos. Manter imagem, identificação e 
+fonte na mesma página: “Figura 1 - Diagrama de casos de uso do AutoDownload” e “Fonte: Elaborado pelo 
+autor (2026).”
+12. Diagrama de casos de uso mistura objetivos e implementação interna   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Página 9 - casos “Criptografar credenciais”, “Salvar boleto no servidor”, 
+“Registrar boleto no banco” e “Registrar histórico da execução”.
+COMENTÁRIO DO ORIENTADOR: O diagrama mistura objetivos observáveis dos atores com operações 
+internas de implementação e utiliza “include” sem o estereótipo UML <<include>>. O excesso de relações 
+prejudica a leitura.
+POSSÍVEL SOLUÇÃO: Manter no diagrama apenas objetivos dos atores. Representar autenticação no portal, 
+download, persistência e geração de notificações em diagrama de atividade ou sequência separado, usando 
+notação UML correta.
+13. Insuficiência de evidências visuais e de modelagem   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Seção 4 - desenvolvimento; o artigo apresenta apenas um diagrama.
+COMENTÁRIO DO ORIENTADOR: Faltam evidências relevantes para um PDS: diagrama de arquitetura, 
+modelo de dados, diagrama de classes ou DER, protótipos e capturas das funcionalidades implementadas.
+POSSÍVEL SOLUÇÃO: Adicionar no corpo ou nos apêndices: arquitetura, DER/diagrama de classes, telas 
+principais, fluxo de automação, quadro de requisitos e evidências da implementação.
+3.4 Resultados, validação e coerência com a implementação
+
+--- PAGE 6 ---
+ULBRA  |  ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
+PARECER - AUTODOWNLOAD  |  6 / 9
+14. Validação sem resultados mensuráveis   [CRÍTICA]
+ONDE / TRECHO PARA CTRL+F: Página 13 - subseção 4.5, “A validação do projeto ocorreu por meio de 
+testes de build, testes automatizados e uso manual”.
+COMENTÁRIO DO ORIENTADOR: A seção apenas afirma que os testes ocorreram. Não apresenta 
+quantidade de casos, cenários, ambiente, resultados, cobertura, falhas, critérios de aprovação ou resumo da 
+execução do xUnit.
+POSSÍVEL SOLUÇÃO: Inserir tabela com requisito, cenário, entrada, resultado esperado, resultado obtido e 
+situação. Registrar data, ambiente, versão testada e resumo real dos testes automatizados e manuais.
+15. Descrição funcional divergente da API   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Página 13 - “cadastrar operadoras”.
+COMENTÁRIO DO ORIENTADOR: Na versão analisada, o sistema lista operadoras previamente existentes e 
+permite cadastrar contas vinculadas a elas; não foi identificado endpoint para que o usuário cadastre uma 
+nova operadora.
+POSSÍVEL SOLUÇÃO: Substituir por: “cadastrar contas vinculadas às operadoras disponibilizadas pelo 
+sistema” ou implementar formalmente a gestão de operadoras e documentá-la.
+16. Recuperação de senha representada como concluída, mas incompleta   [CRÍTICA]
+ONDE / TRECHO PARA CTRL+F: Página 9 - caso de uso “Recuperar senha”; conferir também o fluxo de 
+autenticação.
+COMENTÁRIO DO ORIENTADOR: Na versão do código verificada, o backend registra uma 
+solicitação/notificação interna, mas não gera token com validade, não envia e-mail e não redefine a senha. O 
+frontend informa envio de link mesmo sem comprovar a conclusão do processo.
+POSSÍVEL SOLUÇÃO: Implementar token, validade, envio de e-mail, página de redefinição, tratamento de 
+erro e testes. Até a conclusão, retirar o caso de uso ou descrever a funcionalidade como não implementada.
+17. Afirmações de segurança e LGPD sem comprovação suficiente   [CRÍTICA]
+ONDE / TRECHO PARA CTRL+F: Subseções 2.2 e 4.4 - “hash seguro”, “credenciais protegidas” e 
+“conformidade com princípios da LGPD”.
+COMENTÁRIO DO ORIENTADOR: O artigo não informa algoritmo, política de chaves, base legal, retenção, 
+exclusão, transparência ou política de privacidade. Na versão analisada, a sessão JWT é armazenada em 
+localStorage, o cadastro aceita senha de seis caracteres e o README divulga credencial de demonstração.
+POSSÍVEL SOLUÇÃO: Reduzir afirmações absolutas, documentar controles e limitações, fortalecer a política 
+de senha, avaliar cookie HttpOnly, separar credenciais demonstrativas do ambiente produtivo e incluir política 
+de privacidade, retenção e exclusão de dados.
+18. Persistência dos arquivos PDF não garantida no ambiente de hospedagem   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Subseções 4.4 e 4.5 - hospedagem, registro e download de boletos.
+COMENTÁRIO DO ORIENTADOR: O texto apresenta o download como funcionalidade persistente, porém o 
+próprio projeto registra que arquivos locais podem ser perdidos quando o container do Render é recriado. O 
+banco pode manter o registro do boleto sem que o PDF continue disponível.
+POSSÍVEL SOLUÇÃO: Integrar armazenamento de objetos ou disco persistente. Enquanto isso, explicar que 
+a persistência do registro no PostgreSQL não garante a permanência do arquivo PDF.
+
+--- PAGE 7 ---
+ULBRA  |  ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
+PARECER - AUTODOWNLOAD  |  7 / 9
+19. Uso do AutoBot sem referência e delimitação de autoria   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Página 12 - “foi utilizada como referência técnica uma automação anterior 
+disponível no repositório AutoBot”.
+COMENTÁRIO DO ORIENTADOR: A origem da automação não está formalmente referenciada, e não se 
+identifica quais partes foram reutilizadas, adaptadas ou desenvolvidas originalmente no AutoDownload.
+POSSÍVEL SOLUÇÃO: Inserir referência completa ao AutoBot, autor, versão ou commit, data de acesso e 
+licença. Criar uma tabela “baseline técnico x contribuições do AutoDownload”.
+20. Ausência de versão acadêmica imutável do repositório   [MÉDIA]
+ONDE / TRECHO PARA CTRL+F: Página 15 - “REPOSITÓRIO DO PROJETO NO GITHUB” e link para a 
+branch principal.
+COMENTÁRIO DO ORIENTADOR: A branch principal pode mudar após a avaliação. Sem tag, release ou 
+hash de commit, não é possível reproduzir exatamente a versão descrita no artigo.
+POSSÍVEL SOLUÇÃO: Criar uma tag ou release acadêmica, por exemplo “v1.0-pds”, e registrar no artigo o 
+hash do commit utilizado na validação.
+3.5 Referências, linguagem e acabamento editorial
+21. Referências incompletas e não relacionadas ao texto   [ALTA]
+ONDE / TRECHO PARA CTRL+F: Página 15 - lista de referências.
+COMENTÁRIO DO ORIENTADOR: Há obras que não aparecem no corpo e registros incompletos, 
+especialmente Brown e documentações técnicas sem ano/versão. O repositório do projeto aparece fora da 
+lista e o AutoBot não está referenciado.
+POSSÍVEL SOLUÇÃO: Padronizar conforme a NBR 6023, ordenar alfabeticamente, completar dados 
+bibliográficos, citar todas as obras no corpo e retirar referências não utilizadas.
+22. Siglas e estrangeirismos sem definição e sem padronização   [MÉDIA]
+ONDE / TRECHO PARA CTRL+F: Ao longo do artigo - “frontend”, “backend”, “deploy”, “seed”, “migrations”, 
+“Strategy”, “Repository”, “ORM”, “REST”, “JWT”, “SOLID” e “CAPTCHA”.
+COMENTÁRIO DO ORIENTADOR: Há excesso de termos técnicos em inglês e siglas apresentadas sem 
+explicação na primeira ocorrência, além de variação de grafia.
+POSSÍVEL SOLUÇÃO: Definir cada sigla e termo na primeira ocorrência e manter um padrão. Exemplo: 
+“JSON Web Token (JWT)”, “interface de programação de aplicações no padrão REST” e “banco de dados 
+PostgreSQL”.
+23. Erro de redação na identificação da figura   [BAIXA]
+ONDE / TRECHO PARA CTRL+F: Página 10 - “Figura - 1: Diagrama casos de uso.”
+COMENTÁRIO DO ORIENTADOR: A identificação contém hífen e dois-pontos inadequados, além de faltar a 
+preposição “de”.
+POSSÍVEL SOLUÇÃO: Corrigir para: “Figura 1 - Diagrama de casos de uso.” e incluir a fonte abaixo da figura.
+
+--- PAGE 8 ---
+ULBRA  |  ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
+PARECER - AUTODOWNLOAD  |  8 / 9
+24. Página final em branco   [BAIXA]
+ONDE / TRECHO PARA CTRL+F: Página 16.
+COMENTÁRIO DO ORIENTADOR: A última página contém apenas o número de página, indicando quebra 
+manual ou parágrafos excedentes após as referências.
+POSSÍVEL SOLUÇÃO: Remover a quebra manual de página e os parágrafos vazios ao final do documento.
+4 ORDEM RECOMENDADA DE CORREÇÃO
+# Frente de correção Resultado esperado
+1 Fundamentação teórica e citações Inserir as fontes no corpo do texto e 
+acrescentar trabalhos correlatos.
+2 Metodologia e evidências da 
+pesquisa
+Definir corretamente tipo, 
+participantes/amostra, instrumentos, 
+coleta e análise.
+3 Resultados e validação mensurável Apresentar cenários, evidências, 
+métricas, resultados de testes e 
+critérios de aceitação.
+4 Coerência entre artigo e código Corrigir recuperação de senha, 
+cadastro de operadoras, escopo e 
+demais divergências.
+5 Segurança, LGPD e persistência Qualificar as afirmações e documentar 
+controles, limitações e armazenamento 
+dos PDFs.
+6 Modelagem, figuras e apêndices Adicionar arquitetura, dados, protótipos, 
+capturas e melhorar o diagrama de 
+casos de uso.
+7 Referências, linguagem e formatação 
+final
+Aplicar NBR 6023, revisar siglas, 
+legendas, página em branco e 
+identificação institucional.
+5 CHECKLIST MÍNIMO PARA NOVA SUBMISSÃO
+[ ] Título e identificação institucional corrigidos, com orientador confirmado.
+[ ] Fundamentação teórica com citações e subseção de trabalhos correlatos.
+[ ] Metodologia reescrita com evidências reais e instrumentos anexados.
+[ ] Quadro de requisitos indicando implementado, parcial, demonstrativo ou futuro.
+[ ] Relatório de testes com cenários, resultados e versão do sistema.
+[ ] Diagrama de arquitetura, modelo de dados, telas e protótipos incluídos.
+[ ] Funcionalidades descritas de acordo com a versão do código.
+[ ] Segurança, LGPD e persistência tratadas sem afirmações absolutas.
+[ ] AutoBot e demais fontes técnicas corretamente referenciados.
+[ ] Tag/release acadêmica e hash do commit informados.
+[ ] Referências padronizadas e todas citadas no corpo.
+[ ] Figuras, legendas, fontes, siglas, estrangeirismos e página final revisados.
+
+--- PAGE 9 ---
+ULBRA  |  ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
+PARECER - AUTODOWNLOAD  |  9 / 9
+6 CONCLUSÃO DO PARECER
+Parecer: REVISÃO MAIOR.  O artigo não deve ser encaminhado como versão final antes da correção  
+dos  itens  críticos.  A  nova  versão  deverá  demonstrar,  com  evidências  verificáveis,  a  metodologia  
+empregada, a correspondência entre texto e implementação e os resultados da validação.
+O  projeto  possui  potencial  técnico  e  aderência  ao  curso,  mas  a  qualidade  acadêmica  da  entrega 
+dependerá do fortalecimento da fundamentação, da metodologia, da documentação e da apresentação  
+objetiva das limitações do sistema.
+______________________________________________
+Documento de orientação acadêmica. Não substitui ata, ficha avaliativa ou deliberação formal de banca.
+Lucas Fogaça
+Professor Orientador - Análise e Desenvolvimento de Sistemas

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useApiResource } from "../lib/useApiResource";
+import OperatorLogo from "../components/OperatorLogo";
 
 const fallbackDashboard = {
   totalContas: 0,
@@ -96,7 +97,7 @@ export default function DashboardPage() {
               {recentBoletos.map((b) => (
                 <div key={b.id} className="boleto-item">
                   <div className="boleto-info">
-                    <div className="boleto-icon">{b.icon}</div>
+                    <OperatorLogo operator={b} icon={b.icon} className="boleto-icon" />
                     <div className="boleto-details">
                       <h4>{b.operadora}</h4>
                       <span>{b.referencia} - Vence {formatDate(b.vencimento)}</span>

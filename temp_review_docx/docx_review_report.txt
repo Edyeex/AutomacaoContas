@@ -1,0 +1,81 @@
+paragraphs=374
+tables=9
+images=9
+footnotes_chars=0
+citations_count=4
+headings_count=23
+figures_count=0
+quadros_count=4
+fontes_count=20
+placeholders_count=0
+margins_twips=[{'bottom': '1133.8582677165355', 'top': '1700.7874015748032', 'left': '1700.7874015748032', 'right': '1133.8582677165355', 'header': '720', 'footer': '720'}]
+
+HEADINGS
+0001 [Heading1] AUTODOWNLOAD:
+0002 [Heading3] Uma Aplicação Web para Automação e Gestão de Boletos Recorrentes
+0006 [Heading2] RESUMO
+0010 [Heading2] 1 INTRODUÇÃO
+0018 [Heading2] 2 FUNDAMENTAÇÃO TEÓRICA
+0019 [Heading2] 2.1 Sistemas de informação e automação de processos
+0023 [Heading3] 2.2 Automação web com Selenium WebDriver
+0027 [Heading3] 2.3 Segurança da informação, autenticação e LGPD
+0031 [Heading3] 2.4 Engenharia de software, arquitetura em camadas e padrões
+0035 [Heading3] 2.5 Design Thinking aplicado ao levantamento de requisitos
+0038 [Heading3] 2.6 Trabalhos correlatos
+0079 [Heading2] 3 METODOLOGIA
+0085 [Heading2] 4 DESENVOLVIMENTO
+0086 [Heading2] 4.1 Modelagem do sistema
+0154 [Heading3] 4.2 Arquitetura e estrutura do software
+0161 [Heading3] 4.3 Modelo de dados
+0182 [Heading2] 4.4 Prototipação
+0188 [Heading2] 4.5 Implementação
+0194 [Heading3] 4.6 Segurança e privacidade
+0198 [Heading2] 4.7 Resultado e validação
+0278 [Heading2] 5 CONCLUSÃO
+0283 [Heading2] REFERÊNCIAS
+0296 [Heading2] APÊNDICES SUGERIDOS
+
+PLACEHOLDERS
+
+FIGURES
+
+QUADROS
+0041 Quadro 1 - Comparação entre soluções correlatas
+0299 Quadro A1 - Persona do usuário
+0311 Quadro A2 - Jornada do usuário
+0341 Quadro A3 - Relação entre dores e funcionalidades
+
+FONTES
+0078 Fonte: Elaborado pelo autor (2026).
+0089 Fonte: Elaborado pelo autor (2026)
+0124 Fonte: Elaborado pelo autor (2026).
+0153 Fonte: Elaborado pelo autor (2026)
+0159 Fonte: Elaborado pelo autor (2026).
+0178 Fonte: Elaborado pelo autor (2026).
+0181 Fonte: Elaborado pelo autor (2026).
+0247 Fonte: Elaborado pelo autor (2026).
+0276 Fonte: Elaborado pelo autor (2026).
+0310 Fonte: Elaborado pelo autor (2026).
+0340 Fonte: Elaborado pelo autor (2026).
+0357 Fonte: Elaborado pelo autor (2026).
+0360 Fonte: Elaborado pelo autor (2026).
+0364 Fonte: Elaborado pelo autor (2026).
+0367 Fonte: Elaborado pelo autor (2026).
+0372 Fonte: Elaborado pelo autor (2026).
+0375 Fonte: Elaborado pelo autor (2026).
+0378 Fonte: Elaborado pelo autor (2026).
+0381 Fonte: Elaborado pelo autor (2026).
+0384 Fonte: Elaborado pelo autor (2026).
+
+TABLES
+Table 1: rows=6 cols=6 first=Solução analisada | Centraliza contas | Automatiza download | Histórico | Notificações | Limitações
+Table 2: rows=11 cols=3 first=Código | Requisito | Situação
+Table 3: rows=9 cols=3 first=Código | Requisito | Tratamento no projeto
+Table 4: rows=7 cols=2 first=Entidade | Finalidade
+Table 5: rows=9 cols=5 first=Requisito | Cenário testado | Resultado esperado | Resultado obtido | Situação
+Table 6: rows=9 cols=3 first=Item | AutoBot / referência anterior | AutoDownload
+Table 7: rows=5 cols=2 first=Campo | Descrição
+Table 8: rows=7 cols=4 first=etapa | Ação do usuário | Dificuldade identificada | Oportunidade para o sistema
+Table 9: rows=7 cols=2 first=Dor identificada | Funcionalidade proposta
+
+REFERENCES

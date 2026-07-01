@@ -1,0 +1,82 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #1F4F8F
+  ArrowColor #1F4F8F
+}
+
+actor "Usuario" as Usuario
+actor "Agendador mensal" as Agendador
+actor "Portal da operadora\n(Vero Internet / RMS Telecom)" as Portal
+
+rectangle "Sistema AutoDownload" {
+  usecase "Cadastrar usuario" as UC01
+  usecase "Realizar login" as UC02
+  usecase "Recuperar senha" as UC03
+  usecase "Visualizar painel geral" as UC04
+  usecase "Gerenciar perfil" as UC05
+
+  usecase "Cadastrar conta\nde operadora" as UC06
+  usecase "Editar conta\nde operadora" as UC07
+  usecase "Remover conta\nde operadora" as UC08
+  usecase "Criptografar credenciais\ndo portal" as UC09
+
+  usecase "Executar automacao\nmanual" as UC10
+  usecase "Agendar automacao\nmensal" as UC11
+  usecase "Executar automacao\nagendada" as UC12
+  usecase "Autenticar no portal\nda operadora" as UC13
+  usecase "Localizar fatura\ndisponivel" as UC14
+  usecase "Baixar boleto\nem PDF" as UC15
+  usecase "Salvar boleto\nno servidor" as UC16
+  usecase "Registrar boleto\nno banco" as UC17
+  usecase "Registrar historico\nda execucao" as UC18
+  usecase "Gerar notificacao" as UC19
+
+  usecase "Listar boletos\nbaixados" as UC20
+  usecase "Baixar boleto\npelo site" as UC21
+  usecase "Consultar historico" as UC22
+  usecase "Gerenciar notificacoes" as UC23
+  usecase "Marcar notificacoes\ncomo lidas" as UC24
+  usecase "Excluir notificacoes" as UC25
+}
+
+Usuario --> UC01
+Usuario --> UC02
+Usuario --> UC03
+Usuario --> UC04
+Usuario --> UC05
+Usuario --> UC06
+Usuario --> UC07
+Usuario --> UC08
+Usuario --> UC10
+Usuario --> UC11
+Usuario --> UC20
+Usuario --> UC21
+Usuario --> UC22
+Usuario --> UC23
+Usuario --> UC24
+Usuario --> UC25
+
+Agendador --> UC12
+Portal --> UC13
+Portal --> UC14
+Portal --> UC15
+
+UC06 ..> UC09 : <<include>>
+UC07 ..> UC09 : <<include>>
+UC10 ..> UC13 : <<include>>
+UC10 ..> UC14 : <<include>>
+UC10 ..> UC15 : <<include>>
+UC10 ..> UC16 : <<include>>
+UC10 ..> UC17 : <<include>>
+UC10 ..> UC18 : <<include>>
+UC10 ..> UC19 : <<include>>
+UC12 ..> UC10 : <<include>>
+UC21 ..> UC20 : <<include>>
+UC23 ..> UC24 : <<include>>
+UC23 ..> UC25 : <<include>>
+
+@enduml

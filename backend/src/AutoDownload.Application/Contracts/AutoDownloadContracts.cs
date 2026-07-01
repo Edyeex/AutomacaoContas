@@ -20,6 +20,8 @@ public sealed record AccountScheduleRequest(
     bool LastDayOfMonth,
     TimeOnly Time);
 
+public sealed record AccountPortalPasswordResponse(string SenhaPortal);
+
 public sealed record AccountResponse(
     Guid Id,
     Guid OperadoraId,

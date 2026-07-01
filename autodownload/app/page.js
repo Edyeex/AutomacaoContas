@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppBrand from "./components/AppBrand";
+import PasswordInput from "./components/PasswordInput";
+import ThemeToggle from "./components/ThemeToggle";
 import { apiRequest, saveSession } from "./lib/apiClient";
 
 export default function LoginPage() {
@@ -10,11 +12,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     function clearLoginFields() {
       setEmail("");
       setSenha("");
+      setFieldErrors({});
       formRef.current?.reset();
 
       const emailInput = document.getElementById("login-email");
@@ -37,8 +41,19 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
-    if (!email || !senha) {
-      setError("Preencha todos os campos.");
+    const nextFieldErrors = {};
+
+    if (!email.trim()) {
+      nextFieldErrors.email = "E-mail é obrigatório.";
+    }
+
+    if (!senha) {
+      nextFieldErrors.senha = "Senha é obrigatória.";
+    }
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      setError("Preencha os campos obrigatórios.");
       return;
     }
 
@@ -57,6 +72,10 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
+      <div className="auth-theme-control">
+        <ThemeToggle />
+      </div>
+
       <div className="auth-container">
         <div className="auth-logo">
           <AppBrand variant="auth" />
@@ -73,29 +92,38 @@ export default function LoginPage() {
               <input
                 id="login-email"
                 name="autodownload-login-email"
-                className="form-input"
+                className={`form-input ${fieldErrors.email ? "is-invalid" : ""}`}
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, email: "" }));
+                }}
                 placeholder="seu@email.com"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="none"
                 spellCheck="false"
+                aria-invalid={Boolean(fieldErrors.email)}
               />
+              {fieldErrors.email && <p className="field-error">{fieldErrors.email}</p>}
             </div>
             <div className="form-group">
               <label htmlFor="login-password">Senha</label>
-              <input
+              <PasswordInput
                 id="login-password"
                 name="autodownload-login-password"
-                className="form-input"
-                type="password"
+                inputClassName={`form-input ${fieldErrors.senha ? "is-invalid" : ""}`}
                 value={senha}
-                onChange={(e) => setSenha(e.target.value)}
+                onChange={(e) => {
+                  setSenha(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, senha: "" }));
+                }}
                 autoComplete="new-password"
                 placeholder="••••••••"
+                aria-invalid={Boolean(fieldErrors.senha)}
               />
+              {fieldErrors.senha && <p className="field-error">{fieldErrors.senha}</p>}
             </div>
             <div style={{ marginBottom: 16, textAlign: "right" }}>
               <button
@@ -103,7 +131,7 @@ export default function LoginPage() {
                 className="btn-link"
                 onClick={() => router.push("/recuperar-senha")}
               >
-                Esqueceu a senha?
+                Solicitar suporte para recuperação
               </button>
             </div>
             <button type="submit" className="btn btn-primary btn-block">

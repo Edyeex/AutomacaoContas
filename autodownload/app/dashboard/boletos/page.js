@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useApiResource } from "../../lib/useApiResource";
 import { apiDownload } from "../../lib/apiClient";
+import OperatorLogo from "../../components/OperatorLogo";
 
 function normalize(text) {
   return String(text || "")
@@ -106,7 +107,7 @@ export default function BoletosPage() {
                     <tr key={b.id}>
                       <td>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                          <span>{b.icon}</span> {b.operadora}
+                          <OperatorLogo operator={b} icon={b.icon} className="operator-logo-table" /> {b.operadora}
                         </span>
                       </td>
                       <td>{b.referencia}</td>

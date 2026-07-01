@@ -1,0 +1,374 @@
+0001 [Heading1] AUTODOWNLOAD:
+0002 [Heading3] Uma Aplicação Web para Automação e Gestão de Boletos Recorrentes
+0004 [] ULBRA - Análise e Desenvolvimento de Sistemas
+0005 [] Éder Casagranda¹  Lucas Fogaça²
+0006 [Heading2] RESUMO
+0007 [] O presente Trabalho de Conclusão de Curso apresenta o desenvolvimento do AutoDownload, uma aplicação web voltada à automação do acesso a portais de operadoras e à gestão de boletos recorrentes. A proposta surgiu a partir da observação de que muitos usuários ainda precisam acessar mensalmente diferentes sites para consultar faturas, gerar segunda via, baixar boletos e organizar arquivos manualmente, o que favorece perda de tempo, esquecimento de vencimentos e dificuldade no controle financeiro. Nesse contexto, o AutoDownload tem como objetivo centralizar o cadastro de contas, proteger credenciais de acesso, executar automações de download, registrar o histórico das execuções e disponibilizar notificações ao usuário em um ambiente digital unificado. O sistema foi desenvolvido com frontend em Next.js e React, utilizando JavaScript, HTML e CSS para construção da interface web, enquanto o backend foi implementado em C# com .NET 10, estruturado em camadas e integrado a uma API REST protegida por autenticação JWT. A persistência dos dados foi realizada com PostgreSQL, utilizando Entity Framework Core como ORM, migrations para versionamento do banco e seed para dados de demonstração. As automações foram implementadas com Selenium WebDriver e organizadas por meio do padrão Strategy, permitindo separar a lógica de cada operadora, como Vero Internet, RMS Telecom e operador demonstrativo. Também foram empregados Docker, Render, Vercel e Neon para preparação do ambiente de publicação. A metodologia adotada caracteriza-se como pesquisa aplicada de desenvolvimento tecnológico, com apoio em princípios de Design Thinking, levantamento de requisitos, prototipação, implementação incremental e validação funcional. Como resultado, obteve-se um protótipo funcional capaz de realizar login, cadastro de contas, execução de automações, agendamento mensal, registro de boletos, histórico e notificações. Conclui-se que o AutoDownload contribui para reduzir tarefas repetitivas e melhorar a organização de contas digitais, embora sua evolução ainda dependa de maior cobertura de testes, armazenamento persistente de arquivos e manutenção contínua das automações em razão da instabilidade de portais externos.
+0008 [] ¹ Acadêmico do curso de Análise e Desenvolvimento de Sistemas - ULBRA Torres.  edercasagranda@rede.ulbra.br² Professor Orientador, Lucas Rodrigues Schwartzahupt Fogaça, Tecnólogo em Análise e Desenvolvimento de Sistemas, Especialista em Arquitetura de Software, Especialista em Tecnologias Digitais Aplicada a Educação e Master of Business Administration em Liderança Executiva de TI, Professor Universitário - Analise e Desenvolvimento de Sistemas lucas.fogaca@ulbra.br
+0009 [] Palavras-chave: Automação web. Boletos recorrentes. Aplicação web. NET. Next.js. PostgreSQL. Selenium.
+0010 [Heading2] 1 INTRODUÇÃO
+0011 [] A digitalização de serviços financeiros, de telecomunicações e de utilidades públicas trouxe praticidade para o acesso a contas e documentos de cobrança. Entretanto, essa digitalização também fragmentou a rotina dos usuários, que frequentemente precisam acessar vários portais diferentes para consultar faturas, gerar segunda via, baixar boletos e organizar arquivos em seus dispositivos. Embora cada portal resolva uma parte do processo, a experiência mensal de quem precisa controlar diferentes contas continua sendo repetitiva, manual e sujeita a falhas.
+0012 [] No contexto doméstico e acadêmico, é comum que usuários tenham contas de internet, energia, água, telefone ou outros serviços recorrentes. Para cada uma delas, normalmente é necessário entrar em um site específico, informar login e senha, navegar até a área de faturas, localizar o boleto disponível, realizar o download e depois armazenar o arquivo em uma pasta adequada. Quando esse processo não é realizado com frequência, podem ocorrer atrasos de pagamento, perda de boletos, desorganização de arquivos e dependência de lembretes manuais.
+0013 [] Diante desse cenário, o projeto AutoDownload foi proposto como uma aplicação web para automatizar parte desse fluxo. A ideia central consiste em permitir que o usuário cadastre contas de operadoras, mantenha credenciais protegidas, execute automações para buscar boletos disponíveis e acompanhe tudo por meio de uma interface web com histórico, notificações e área de download. Dessa forma, o sistema busca transformar uma tarefa recorrente e dispersa em um processo centralizado e rastreável.
+0014 [] O problema de pesquisa que orienta este trabalho pode ser formulado da seguinte maneira: como uma aplicação web, apoiada em automação de navegação, boas práticas de engenharia de software e mecanismos de segurança, pode reduzir o esforço manual necessário para obter e organizar boletos recorrentes?
+0015 [] O objetivo geral deste artigo é apresentar o desenvolvimento do AutoDownload, descrevendo sua concepção, arquitetura, tecnologias utilizadas, funcionalidades implementadas e resultados obtidos. Como objetivos específicos, destacam-se: identificar as necessidades do usuário no gerenciamento de boletos recorrentes; projetar uma aplicação web com autenticação, cadastro de contas e organização de boletos; implementar um backend estruturado em camadas com persistência em PostgreSQL; desenvolver estratégias de automação para operadoras; registrar histórico e notificações; e validar o funcionamento da solução por meio de testes e execução controlada.
+0016 [] A justificativa do projeto está relacionada à relevância prática do problema. Apesar de existirem aplicativos bancários e portais individuais das operadoras, muitos usuários ainda precisam realizar manualmente o processo de acesso e download de contas. Uma solução centralizada pode economizar tempo, reduzir esquecimentos e melhorar a organização financeira. Além disso, o projeto possui aderência ao curso de Análise e Desenvolvimento de Sistemas por envolver levantamento de requisitos, modelagem, frontend, backend, banco de dados, segurança, testes, deploy e integração com serviços externos.
+0017 [] Este artigo está organizado em cinco seções. A primeira apresenta a introdução, o problema, os objetivos e a justificativa. A segunda discute os fundamentos teóricos relacionados à automação web, sistemas de informação, segurança e Design Thinking. A terceira descreve a metodologia adotada. A quarta apresenta o desenvolvimento do sistema, incluindo modelagem, arquitetura, implementação e resultados. Por fim, a quinta seção traz as conclusões, limitações e possibilidades de evolução.
+0018 [Heading2] 2 FUNDAMENTAÇÃO TEÓRICA
+0019 [Heading2] 2.1 Sistemas de informação e automação de processos
+0020 [] Sistemas de informação são utilizados para coletar, processar, armazenar e disponibilizar dados de maneira organizada, apoiando a execução de atividades e a tomada de decisão. Em aplicações web modernas, esses sistemas combinam interface, regras de negócio, persistência de dados e integração com serviços externos. Segundo Sommerville (2019), a organização estrutural de um software influencia diretamente sua manutenção, evolução e capacidade de atender requisitos funcionais e não funcionais.
+0021 [] A automação de processos busca reduzir a intervenção humana em atividades repetitivas, padronizadas e suscetíveis a erros. No contexto do AutoDownload, a atividade automatizada corresponde ao acesso a portais de operadoras para localizar e baixar boletos disponíveis. Essa automação não elimina a necessidade de controle do usuário, mas reduz etapas manuais, registra resultados e permite maior rastreabilidade das execuções.
+0022 [] Entretanto, automações dependentes de sites externos apresentam riscos técnicos. Portais podem alterar elementos visuais, modificar identificadores de campos, inserir validações adicionais ou bloquear acessos automatizados. Por isso, o sistema precisa prever tratamento de falhas, logs, notificações e possibilidade de manutenção por operadora.
+0023 [Heading3] 2.2 Automação web com Selenium WebDriver
+0024 [] O Selenium WebDriver é uma ferramenta utilizada para controlar navegadores de forma programável, permitindo a realização de ações como preenchimento de formulários, cliques, navegação entre páginas, leitura de elementos e captura de arquivos gerados por sites (SELENIUM, 2026). Em projetos de automação, essa ferramenta possibilita reproduzir fluxos que normalmente seriam realizados manualmente pelo usuário.
+0025 [] No AutoDownload, o Selenium foi utilizado para executar estratégias específicas de automação em portais de operadoras. Cada estratégia é responsável por realizar login, navegar até a seção de faturas, identificar boletos disponíveis e iniciar o download do arquivo. Essa abordagem foi combinada ao padrão Strategy, permitindo que cada operadora possua sua própria lógica sem comprometer o restante da aplicação.
+0026 [] Apesar de sua utilidade, o Selenium possui limitações quando executado em ambiente de hospedagem gratuita ou em containers com poucos recursos. A automação pode ser impactada por tempo de resposta do servidor, necessidade de navegador headless, ausência de interface gráfica, alterações de layout e indisponibilidade dos portais externos.
+0027 [Heading3] 2.3 Segurança da informação, autenticação e LGPD
+0028 [] Aplicações que manipulam dados pessoais e credenciais precisam considerar segurança desde as etapas iniciais do desenvolvimento. A Lei Geral de Proteção de Dados Pessoais, Lei n. 13.709/2018, estabelece princípios como finalidade, necessidade, transparência, segurança e prevenção no tratamento de dados pessoais (BRASIL, 2018).
+0029 [] No AutoDownload, são tratados dados como nome, e-mail, identificadores de cliente, logins de portal e senhas de acesso a operadoras. Por esse motivo, o sistema utiliza autenticação com JSON Web Token (JWT) para proteger rotas da API, hash para senhas dos usuários e criptografia para credenciais dos portais externos. As chaves sensíveis devem ser configuradas por variáveis de ambiente, evitando exposição em arquivos versionados.
+0030 [] Ainda assim, não se deve afirmar conformidade plena com a LGPD sem uma política formal de privacidade, retenção, auditoria e resposta a incidentes. O mais adequado é afirmar que o projeto adota práticas alinhadas a princípios da LGPD, reconhecendo limitações e melhorias futuras, como fortalecimento de política de senha, avaliação de cookies HttpOnly para sessão, armazenamento persistente seguro de arquivos e documentação clara sobre exclusão de dados.
+0031 [Heading3] 2.4 Engenharia de software, arquitetura em camadas e padrões
+0032 [] A engenharia de software fornece métodos e práticas para desenvolver sistemas com qualidade, manutenibilidade e evolução controlada. Pressman e Maxim (2016) destacam que um projeto de software deve considerar requisitos, arquitetura, implementação, testes e manutenção como partes integradas do ciclo de desenvolvimento.
+0033 [] No AutoDownload, o backend foi organizado em camadas, separando API, aplicação, domínio e infraestrutura. A API expõe endpoints REST para consumo do frontend. A camada de aplicação concentra serviços e contratos responsáveis por orquestrar regras de negócio. O domínio representa entidades centrais, como usuário, conta, operadora, boleto, notificação e execução de automação. A infraestrutura implementa persistência, criptografia, automações e integrações externas.
+0034 [] Essa organização favorece princípios SOLID, especialmente responsabilidade única, inversão de dependência e abertura para extensão. O padrão Repository auxilia no isolamento do acesso ao banco de dados, enquanto o padrão Strategy permite variar a lógica de automação conforme a operadora. A injeção de dependência contribui para substituir implementações e facilitar testes.
+0035 [Heading3] 2.5 Design Thinking aplicado ao levantamento de requisitos
+0036 [] O Design Thinking é uma abordagem voltada à compreensão de problemas a partir das necessidades dos usuários, geralmente associada às etapas de empatia, definição, ideação, prototipação e teste (BROWN, 2008). Norman (2006) também destaca a importância de projetar soluções considerando a experiência real das pessoas que utilizarão o sistema.
+0037 [] No AutoDownload, o Design Thinking foi utilizado como inspiração para compreender a dor relacionada ao gerenciamento manual de boletos. A etapa de empatia ocorreu por meio da observação do fluxo manual de acesso a portais. A definição concentrou o problema na redução do esforço repetitivo para obter e organizar contas digitais. Na ideação, foram propostas funcionalidades como dashboard, cadastro de contas, automações por operadora, histórico, notificações e agendamento mensal. A prototipação ocorreu por meio da interface web, inicialmente com dados simulados e posteriormente integrada ao backend.
+0038 [Heading3] 2.6 Trabalhos correlatos
+0039 [] A análise de trabalhos correlatos permite compreender alternativas existentes e delimitar a contribuição do AutoDownload. Embora existam portais de operadoras, aplicativos bancários e ferramentas de organização pessoal, essas soluções geralmente resolvem apenas partes do problema, sem centralizar a automação de acesso a diferentes portais.
+0041 [] Quadro 1 - Comparação entre soluções correlatas
+0042 [] Solução analisada
+0043 [] Centraliza contas
+0044 [] Automatiza download
+0045 [] Histórico
+0046 [] Notificações
+0047 [] Limitações
+0048 [] Portais individuais de operadoras
+0049 [] Não
+0050 [] Não
+0051 [] Parcial
+0052 [] Parcial
+0053 [] Exigem acesso separado a cada portal
+0054 [] Aplicativos bancários
+0055 [] Parcial
+0056 [] Não
+0057 [] Parcial
+0058 [] sim
+0059 [] Dependem de boletos já cadastrados ou pagos
+0060 [] Planilhas/lembretes manuais
+0061 [] Parcial
+0062 [] Não
+0063 [] Manual
+0064 [] Manual
+0065 [] Exigem disciplina e atualização constante
+0066 [] AutoBot
+0067 [] Não
+0068 [] Sim, para fluxo específico
+0069 [] Limitado
+0070 [] Não integrado
+0071 [] Automação isolada, sem dashboard e banco estruturado
+0072 [] AutoDownload
+0073 [] Sim
+0074 [] Sim, por estratégia de operadora
+0075 [] Sim
+0076 [] Sim
+0077 [] Depende da estabilidade dos portais externos
+0078 [] Fonte: Elaborado pelo autor (2026).
+0079 [Heading2] 3 METODOLOGIA
+0080 [] A pesquisa caracteriza-se como aplicada, pois busca resolver um problema prático relacionado à automação e organização de boletos recorrentes. Também pode ser classificada como pesquisa de desenvolvimento tecnológico, uma vez que resultou na construção de um protótipo funcional de aplicação web. Quanto à abordagem, possui caráter qualitativo, pois analisa necessidades, fluxos de uso, requisitos e validação funcional do sistema. Quanto aos objetivos, apresenta caráter exploratório e descritivo, pois investiga a viabilidade técnica da automação em portais externos e descreve o processo de desenvolvimento da solução (GIL, 2017).
+0081 [] Diferentemente de uma pesquisa com amostra estatística, este trabalho utilizou como unidade de análise o fluxo manual de obtenção de boletos recorrentes. A coleta de dados ocorreu por meio da observação de etapas executadas pelo usuário, análise de documentos de proposta do projeto, levantamento de requisitos, revisões recebidas durante o acompanhamento acadêmico, execução local da aplicação e testes funcionais das principais funcionalidades.
+0082 [] A análise dos dados foi realizada pela transformação das necessidades observadas em requisitos funcionais e não funcionais. Entre os requisitos funcionais estão autenticação, cadastro de contas, execução de automação, listagem de boletos, histórico, notificações e agendamento mensal. Entre os requisitos não funcionais estão segurança, usabilidade, manutenibilidade, disponibilidade, rastreabilidade e proteção de credenciais.
+0083 [] O processo de desenvolvimento combinou princípios de Design Thinking com desenvolvimento incremental. Inicialmente, foram identificadas dores do usuário e definida a proposta de valor. Em seguida, foram criadas telas de alta fidelidade diretamente na aplicação frontend, com dados simulados. Posteriormente, a solução foi integrada à API real, ao banco PostgreSQL e às estratégias de automação. A cada incremento, funcionalidades foram testadas localmente e ajustadas conforme necessidades encontradas.
+0084 [] A validação ocorreu por meio de testes de build, testes unitários no backend com xUnit, verificação do endpoint de saúde da API, uso manual da aplicação, execução de automações reais em ambiente local e uso de operador demonstrativo para reduzir dependência de portais externos. Os resultados foram registrados por meio de histórico de execuções, notificações, registros no banco e arquivos baixados.
+0085 [Heading2] 4 DESENVOLVIMENTO
+0086 [Heading2] 4.1 Modelagem do sistema
+0087 [] A modelagem do AutoDownload partiu da rotina de usuários que precisam acessar portais diferentes para baixar boletos. Foram definidos três atores principais: usuário, sistema AutoDownload e portal da operadora. O usuário realiza cadastro, login, cadastro de contas, configuração de agendamento, execução manual de automação, consulta de boletos, histórico e notificações. O sistema AutoDownload autentica o usuário, protege dados, executa estratégias de automação, registra resultados e disponibiliza informações. O portal externo representa os sistemas das operadoras acessados pela automação.
+0088 [] Figura - 1: Diagrama casos de uso.
+0089 [] Fonte: Elaborado pelo autor (2026)
+0090 [] Quadro - 2 - Requisitos funcionais
+0091 [] Código
+0092 [] Requisito
+0093 [] Situação
+0094 [] RF01
+0095 [] Permitir cadastro e login de usuário
+0096 [] Implementado
+0097 [] RF02
+0098 [] Proteger rotas da API com JWT
+0099 [] Implementado
+0100 [] RF03
+0101 [] Permitir cadastro de contas vinculadas a operadoras
+0102 [] Implementado
+0103 [] RF04
+0104 [] Permitir edição e remoção de contas
+0105 [] Implementado
+0106 [] RF05
+0107 [] Executar automação manual de download
+0108 [] Implementado
+0109 [] RF06
+0110 [] Registrar histórico de execuções
+0111 [] Implementado
+0112 [] RF07
+0113 [] Registrar boletos baixados no banco
+0114 [] Implementado
+0115 [] RF08
+0116 [] Exibir notificações de sucesso, falha ou alterações
+0117 [] Implementado
+0118 [] RF09
+0119 [] Permitir agendamento mensal de automação
+0120 [] Implementado
+0121 [] RF10
+0122 [] Recuperar senha por e-mail com token
+0123 [] Futuro ou parcial
+0124 [] Fonte: Elaborado pelo autor (2026).
+0125 [] Quadro - 3 - Requisitos não funcionais
+0126 [] Código
+0127 [] Requisito
+0128 [] Tratamento no projeto
+0129 [] RF01
+0130 [] Segurança de acesso
+0131 [] Autenticação JWT e rotas autenticadas
+0132 [] RF02
+0133 [] Proteção de senhas
+0134 [] Hash de senha de usuário
+0135 [] RF03
+0136 [] Proteção de credenciais externas
+0137 [] Criptografia das senhas dos portais
+0138 [] RF04
+0139 [] Manutenibilidade
+0140 [] Arquitetura em camadas e Strategy
+0141 [] RF05
+0142 [] Persistência
+0143 [] PostgreSQL com Entity Framework Core
+0144 [] RF06
+0145 [] Rastreabilidade
+0146 [] Histórico, notificações e registros de execução
+0147 [] RF07
+0148 [] Usabilidade
+0149 [] Interface web com dashboard, filtros e modo claro/escuro
+0150 [] RF08
+0151 [] Disponibilidade
+0152 [] Deploy web com frontend, backend e banco separados
+0153 [] Fonte: Elaborado pelo autor (2026)
+0154 [Heading3] 4.2 Arquitetura e estrutura do software
+0155 [] O AutoDownload foi desenvolvido como uma aplicação web composta por frontend, backend e banco de dados. O frontend, criado com Next.js e React, concentra a interface de usuário, telas de login, dashboard, contas, boletos, histórico, notificações e configurações. A comunicação com o backend ocorre por chamadas HTTP para uma API REST.
+0156 [] O backend foi implementado em C# com .NET 10 e organizado em camadas. A camada de API recebe requisições, valida autenticação e retorna respostas ao frontend. A camada de aplicação orquestra os casos de uso, como cadastro de contas, execução de automação e listagem de boletos. A camada de domínio concentra entidades e regras centrais. A camada de infraestrutura implementa acesso ao banco, criptografia, serviços externos e automações.
+0157 [] O banco de dados PostgreSQL armazena usuários, operadoras, contas, boletos, execuções e notificações. O Entity Framework Core foi utilizado como Object-Relational Mapper (ORM), permitindo mapear entidades para tabelas, criar migrations e versionar a estrutura do banco.
+0158 [] Figura - 2 - Arquitetura geral do AutoDownload.
+0159 [] Fonte: Elaborado pelo autor (2026).
+0161 [Heading3] 4.3 Modelo de dados
+0162 [] O modelo de dados foi definido para registrar usuários, operadoras disponíveis, contas cadastradas, boletos baixados, execuções de automação e notificações. Essa organização permite que cada usuário acesse apenas seus próprios dados e que as execuções sejam rastreadas.
+0163 [] Quadro - 4 - Principais entidades do banco de dados
+0164 [] Entidade
+0165 [] Finalidade
+0166 [] users
+0167 [] Armazena usuários da aplicação
+0168 [] operators
+0169 [] Armazena operadoras disponíveis para automação
+0170 [] accounts
+0171 [] Armazena contas cadastradas pelo usuário
+0172 [] bills
+0173 [] Armazena registros dos boletos baixados
+0174 [] automation_runs
+0175 [] Armazena histórico das execuções
+0176 [] notifications
+0177 [] Armazena notificações apresentadas ao usuário
+0178 [] Fonte: Elaborado pelo autor (2026).
+0180 [] Figura - 3:  Modelo de dados do AutoDownload.
+0181 [] Fonte: Elaborado pelo autor (2026).
+0182 [Heading2] 4.4 Prototipação
+0183 [] A prototipação foi realizada como protótipo codificado de alta fidelidade. Inicialmente, as telas foram construídas com dados simulados para validar organização visual, navegação e fluxo de uso. Posteriormente, o frontend foi integrado à API real, substituindo os dados mockados por informações vindas do banco de dados.
+0184 [] As principais telas implementadas foram login, cadastro de usuário, dashboard, contas cadastradas, boletos, histórico, notificações e configurações. A interface também recebeu suporte a modo claro e escuro, busca, indicadores de resumo, menu lateral e opções de perfil. Essa escolha buscou tornar a aplicação mais acessível e simples para usuários que desejam executar tarefas recorrentes com poucos cliques.
+0185 [] Figura - 01: Tela de loginFonte: Elaborado pelo autor (2026)
+0186 [] Figura - 02: Tela inicial da aplicaçãoFonte: Elaborado pelo autor (2026)
+0187 [] Figura - 03: Tela para adicionar uma contaFonte: Elaborado pelo autor (2026)
+0188 [Heading2] 4.5 Implementação
+0189 [] No frontend, Next.js e React foram utilizados para construir a interface da aplicação. A comunicação com o backend é configurada por variável de ambiente, permitindo alternar entre ambiente local e ambiente publicado. As páginas autenticadas consomem endpoints da API para exibir dashboard, contas, boletos, histórico e notificações.
+0190 [] No backend, .NET 10 foi utilizado para criar uma API REST. A autenticação foi implementada com JWT, permitindo identificar o usuário autenticado e filtrar informações por proprietário. As senhas dos usuários são armazenadas por hash, enquanto credenciais dos portais externos são criptografadas antes da persistência. As configurações sensíveis, como connection string, chave JWT e chave de criptografia, devem permanecer em variáveis de ambiente.
+0191 [] As automações foram implementadas por meio de estratégias específicas. A estratégia da Vero Internet acessa o portal da operadora, realiza login, navega até a área de fatura e tenta baixar o boleto disponível. A estratégia da RMS Telecom segue lógica equivalente, adaptada ao portal correspondente. Já a estratégia demonstrativa permite simular o fluxo completo sem depender de portais externos, sendo importante para apresentações e testes controlados.
+0192 [] O sistema também recebeu suporte a agendamento mensal. Nessa funcionalidade, o usuário escolhe dia e horário para execução automática de determinada conta. O backend calcula a próxima execução e mantém o agendamento ativo até que o usuário opte por desativá-lo. Ao executar, o sistema registra o resultado no histórico, cria notificações e, quando houver arquivo disponível, registra o boleto baixado.
+0193 [] Para publicação, o frontend foi configurado para Vercel, o backend para Render com Docker e o banco para Neon. Essa arquitetura separa responsabilidades e permite que o sistema funcione como aplicação web hospedada. Entretanto, hospedagens gratuitas podem hibernar serviços, limitar recursos e não garantir persistência local de arquivos, o que deve ser considerado como limitação.
+0194 [Heading3] 4.6 Segurança e privacidade
+0195 [] A segurança do AutoDownload foi tratada em diferentes pontos da aplicação. O login do usuário utiliza autenticação JWT para proteger rotas da API. As senhas cadastradas na aplicação não devem ser armazenadas em texto puro, sendo protegidas por hash. As credenciais utilizadas para acessar portais externos são criptografadas antes de serem salvas no banco de dados.
+0196 [] Também foi adotada a separação de configurações sensíveis por variáveis de ambiente, evitando que chaves, senhas e connection strings reais fiquem versionadas no repositório. Essa prática reduz o risco de exposição acidental em ambientes públicos.
+0197 [] Em relação à LGPD, o projeto adota práticas alinhadas a princípios como finalidade, necessidade e segurança, pois armazena apenas dados necessários ao funcionamento da aplicação e permite a remoção de contas e notificações pelo usuário. Ainda assim, a conformidade completa exige evoluções, como política de privacidade formal, definição de prazo de retenção, auditoria de acessos, revisão de armazenamento do token JWT e documentação do processo de exclusão de dados.
+0198 [Heading2] 4.7 Resultado e validação
+0199 [] Como resultado, o AutoDownload entregou um protótipo funcional com login, cadastro de contas, automação manual, agendamento mensal, histórico, notificações, listagem de boletos e download de arquivos. O dashboard apresenta indicadores de contas cadastradas, boletos baixados, execuções com sucesso, falhas e próxima execução. A tela de contas permite adicionar, editar, remover, executar e agendar automações. A tela de boletos permite consultar documentos registrados e realizar download.
+0200 [] A validação foi realizada por meio de testes automatizados no backend, testes manuais no frontend, execução local da aplicação e verificação de endpoints da API. Também foram realizados testes com automações reais em ambiente local e com automação demonstrativa para reduzir a dependência de instabilidade externa.
+0201 [] Quadro - 5 - Validação funcional
+0202 [] Requisito
+0203 [] Cenário testado
+0204 [] Resultado esperado
+0205 [] Resultado obtido
+0206 [] Situação
+0207 [] Login
+0208 [] Usuário informa credenciais válidas
+0209 [] Acesso liberado e token gerado
+0210 [] Acesso realizado
+0211 [] Aprovado
+0212 [] Cadastro de conta
+0213 [] Usuário cadastra conta vinculada a operadora
+0214 [] Conta aparece na listagem
+0215 [] Conta registrada
+0216 [] Aprovado
+0217 [] Edição de conta
+0218 [] Usuário altera dados da conta
+0219 [] Dados atualizados no banco
+0220 [] Dados persistidos
+0221 [] Aprovado
+0222 [] Remoção de conta
+0223 [] Usuário remove conta
+0224 [] Conta deixa de aparecer após recarregar
+0225 [] Remoção persistente
+0226 [] Aprovado
+0227 [] Notificação
+0228 [] Sistema gera evento de sucesso/falha
+0229 [] Notificação exibida ao usuário
+0230 [] Notificação registrada
+0231 [] Aprovado
+0232 [] Automação demo
+0233 [] Usuário executa operador demonstrativo
+0234 [] Boleto e histórico registrados
+0235 [] Fluxo demonstrado
+0236 [] Aprovado
+0237 [] Automação real
+0238 [] Usuário executa a automação
+0239 [] Boleto baixado quando disponível
+0240 [] Dependente do portal externo
+0241 [] Aprovado
+0242 [] Agendamento mensal
+0243 [] Usuário define dia e horário
+0244 [] Próxima execução calculada
+0245 [] Agendamento exibido
+0246 [] Aprovado
+0247 [] Fonte: Elaborado pelo autor (2026).
+0248 [] Quadro - 6 - Baseline técnico e contribuições do AutoDownload
+0249 [] Item
+0250 [] AutoBot / referência anterior
+0251 [] AutoDownload
+0252 [] Automação de portal
+0253 [] Existia como referência de automação
+0254 [] Adaptada para estratégias no backend
+0255 [] Interface web
+0256 [] Não era o foco principal
+0257 [] Criada com Next.js e React
+0258 [] API REST
+0259 [] Não centralizada no fluxo original
+0260 [] Implementada em .NET 10
+0261 [] Banco de dados
+0262 [] Limitado ou inexistente no fluxo original
+0263 [] PostgreSQL com EF Core
+0264 [] Histórico
+0265 [] Não integrado ao sistema web
+0266 [] Registrado em automation_runs
+0267 [] Notificações
+0268 [] Não integradas
+0269 [] Implementadas por usuário
+0270 [] Agendamento
+0271 [] Não centralizado
+0272 [] Implementado por conta
+0273 [] Deploy web
+0274 [] Não era o foco
+0275 [] Preparado com Vercel, Render e Neon
+0276 [] Fonte: Elaborado pelo autor (2026).
+0277 [] Apesar dos resultados obtidos, algumas limitações permanecem. A primeira envolve a dependência de portais externos, que podem alterar telas, exigir CAPTCHA ou bloquear navegadores automatizados. A segunda envolve armazenamento de arquivos em hospedagens gratuitas, pois containers podem ser recriados e apagar arquivos locais. A terceira diz respeito à necessidade de ampliar testes automatizados, especialmente testes de integração e testes de automação em páginas simuladas.
+0278 [Heading2] 5 CONCLUSÃO
+0279 [] O desenvolvimento do AutoDownload demonstrou a viabilidade de uma aplicação web voltada à automação e gestão de boletos recorrentes. O projeto partiu de um problema prático, presente na rotina de usuários que precisam acessar diferentes portais mensalmente, e resultou em uma solução com frontend, backend, banco de dados, autenticação, cadastro de contas, histórico, notificações, agendamento e automações por operadora.
+0280 [] Do ponto de vista técnico, o projeto permitiu aplicar conceitos relevantes de engenharia de software, como arquitetura em camadas, padrões Repository e Strategy, injeção de dependência, persistência com Entity Framework Core, autenticação JWT, criptografia de credenciais, migrations, seed de dados, testes automatizados e deploy em ambiente web. A utilização de princípios de Design Thinking contribuiu para manter o foco na dor do usuário e orientar decisões de interface e funcionalidades.
+0281 [] Os resultados indicam que a solução pode reduzir tarefas repetitivas e melhorar a organização de boletos, especialmente quando utilizada com automação demonstrativa ou com portais estáveis. Entretanto, automações reais dependem do comportamento de sistemas externos, o que exige manutenção contínua, logs claros e estratégias de contingência. Também é necessário evoluir aspectos de segurança, documentação, testes, publicação e armazenamento persistente de arquivos.
+0282 [] Como trabalhos futuros, recomenda-se ampliar a cobertura de testes, criar um portal simulado para validação controlada das automações, integrar armazenamento de arquivos em serviço externo, melhorar observabilidade em produção, documentar políticas de privacidade e retenção de dados, criar release acadêmica do repositório e incluir novas operadoras. Com essas evoluções, o AutoDownload pode tornar-se uma solução mais robusta, demonstrável e alinhada às exigências acadêmicas e práticas do Projeto de Desenvolvimento de Software.
+0283 [Heading2] REFERÊNCIAS
+0284 [] AUTOBOT. Repositório AutoBot. Disponível em: https://github.com/Edyeex/AutoBot. Acesso em: 25 jun. 2026.
+0285 [] BRASIL. Lei n. 13.709, de 14 de agosto de 2018. Lei Geral de Proteção de Dados Pessoais (LGPD). Brasília, DF: Presidência da República, 2018. Disponível em: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm. Acesso em: 25 jun. 2026.
+0286 [] BROWN, Tim. Design Thinking. Harvard Business Review, 2008.
+0287 [] GIL, Antonio Carlos. Métodos e técnicas de pesquisa social. 7. ed. São Paulo: Atlas, 2017.
+0288 [] MICROSOFT. ASP.NET Core documentation. Disponível em: https://learn.microsoft.com/aspnet/core/. Acesso em: 25 jun. 2026.
+0289 [] MICROSOFT. Entity Framework Core documentation. Disponível em: https://learn.microsoft.com/ef/core/. Acesso em: 25 jun. 2026.
+0290 [] NORMAN, Donald A. O design do dia a dia. Rio de Janeiro: Rocco, 2006.
+0291 [] PRESSMAN, Roger S.; MAXIM, Bruce R. Engenharia de software: uma abordagem profissional. 8. ed. Porto Alegre: AMGH, 2016.
+0292 [] SELENIUM. Selenium WebDriver documentation. Disponível em: https://www.selenium.dev/documentation/webdriver/. Acesso em: 25 jun. 2026.
+0293 [] SOMMERVILLE, Ian. Engenharia de software. 10. ed. São Paulo: Pearson, 2019.
+0294 [] VERCEL. Next.js on Vercel. Disponível em: https://vercel.com/docs/frameworks/nextjs. Acesso em: 25 jun. 2026.
+0296 [Heading2] APÊNDICES SUGERIDOS
+0298 [] APÊNDICE A - Artefatos de Design Thinking: persona, jornada do usuário e definição do problema.
+0299 [] Quadro A1 - Persona do usuário
+0300 [] Campo
+0301 [] Descrição
+0302 [] Persona
+0303 [] Usuário doméstico responsável pelo pagamento de contas
+0304 [] Perfil
+0305 [] Adulto que possui contas recorrentes de internet, telefone, serviços digitais ou outras despesas mensais. Utiliza computador ou celular para acessar portais de empresas, mas não deseja perder tempo repetindo processos manuais todos os meses.
+0306 [] Necessidades
+0307 [] Centralizar informações de contas recorrentes, baixar boletos com menos esforço, consultar histórico de arquivos baixados e receber avisos sobre falhas ou execuções realizadas.
+0308 [] Dores
+0309 [] Precisa acessar diferentes portais, lembrar senhas, localizar a área de faturas, baixar arquivos manualmente e organizar os boletos no computador. Também pode esquecer vencimentos ou perder arquivos baixados.
+0310 [] Fonte: Elaborado pelo autor (2026).
+0311 [] Quadro A2 - Jornada do usuário
+0312 [] etapa
+0313 [] Ação do usuário
+0314 [] Dificuldade identificada
+0315 [] Oportunidade para o sistema
+0316 [] 1. Necessidade de pagar uma conta
+0317 [] Percebe que precisa consultar ou baixar um boleto mensal.
+0318 [] Pode esquecer o vencimento ou não lembrar se já baixou o boleto.
+0319 [] Exibir próxima execução, histórico e notificações.
+0320 [] 2. Acesso ao portal da operadora
+0321 [] Entra no site da operadora e informa o login e senha.
+0322 [] Precisa lembrar as credenciais e acessar sites diferentes.
+0323 [] Permitir cadastro protegido das credenciais da conta.
+0324 [] 3. Busca pela área de faturas
+0325 [] Navega até a seção de faturas ou segunda via.
+0326 [] Cada portal possui uma navegação diferente.
+0327 [] Automatizar o caminho por estratégia de operadora.
+0328 [] 4. Localização do boleto
+0329 [] Identifica a fatura disponível para pagamento.
+0330 [] Pode haver boleto indisponível, portal instável ou informação difícil de localizar.
+0331 [] Registrar sucesso, falha ou indisponibilidade no histórico.
+0332 [] 5. Download do arquivo
+0333 [] Baixa o boleto para o computador.
+0334 [] O arquivo pode ser perdido ou salvo em local inadequado.
+0335 [] Registrar boleto baixado e disponibilizar acesso na tela de boletos.
+0336 [] 6. Consulta posterior
+0337 [] Procura novamente o boleto ou verifica se a execução ocorreu.
+0338 [] Falta de controle centralizado das execuções.
+0339 [] Exibir histórico, notificações e boletos registrados.
+0340 [] Fonte: Elaborado pelo autor (2026).
+0341 [] Quadro A3 - Relação entre dores e funcionalidades
+0343 [] Dor identificada
+0344 [] Funcionalidade proposta
+0345 [] Acessar vários portais manualmente.
+0346 [] Automação por operadora.
+0347 [] Esquecer vencimentos ou execuções.
+0348 [] Notificações e indicação da próxima execução.
+0349 [] Perder boletos baixados.
+0350 [] Listagem de boletos e registro no histórico.
+0351 [] Repetir o processo todos os meses.
+0352 [] Agendamento mensal automático.
+0353 [] Dificuldade para acompanhar falhas.
+0354 [] Histórico de execuções e notificações de erro.
+0355 [] Necessidade de proteger dados de acesso.
+0356 [] Criptografia das credenciais dos portais e autenticação JWT.
+0357 [] Fonte: Elaborado pelo autor (2026).
+0358 [] APÊNDICE B - Diagrama de casos de uso revisado.
+0360 [] Fonte: Elaborado pelo autor (2026).
+0361 [] APÊNDICE C - Diagrama de arquitetura e modelo de dados.
+0362 [] Figura - C1: Arquitetura geral do AutoDownload
+0364 [] Fonte: Elaborado pelo autor (2026).
+0365 [] Figura - C2 - Modelo de dados do AutoDownload
+0367 [] Fonte: Elaborado pelo autor (2026).
+0369 [] APÊNDICE D - Capturas das principais telas do sistema.
+0370 [] Figura - D1: Tela de login
+0372 [] Fonte: Elaborado pelo autor (2026).
+0373 [] Figura - D2: Tela principal
+0375 [] Fonte: Elaborado pelo autor (2026).
+0376 [] Figura - D3: Tela de contas cadastradas e cadastro de contas.
+0378 [] Fonte: Elaborado pelo autor (2026).
+0379 [] Figura - D4: Tela de notificações
+0381 [] Fonte: Elaborado pelo autor (2026).
+0382 [] Figura - D5: Tela de históricos de downloads.
+0384 [] Fonte: Elaborado pelo autor (2026).
+0386 [] APÊNDICE E - Registro da versão acadêmica: tag, hash do commit e link do repositório.
+0387 [] Repositório do projeto:https://github.com/Edyeex/AutomacaoContas
+0388 [] Link da aplicação publicada: https://automacao-contas.vercel.app/
+0389 [] Versão acadêmica/tag: v1.0-pds
+0390 [] Hash do commit: 6cc09724a6c5e1ba0c85abe6ea7c0b5e6ed88858
+0391 [] Data de validação: 25/06/2026

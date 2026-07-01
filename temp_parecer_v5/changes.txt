@@ -1,0 +1,17 @@
+Arquivo gerado: C:\temp\PDS\Documents\AUTODOWNLOAD_ajustado_parecer_v5.docx
+Original preservado: C:\Users\android\Downloads\AUTODOWNLOAD.docx
+Ajustes principais:
+- Margens A4 ajustadas para 3 cm superior/esquerda e 2 cm inferior/direita.
+- Título consolidado em caixa alta, Arial 14 e negrito.
+- Resumo e conclusão reescritos com linguagem cautelosa.
+- Escopo textual limitado a internet/telecomunicações.
+- Trabalhos correlatos reformulados com soluções concretas.
+- Quadro metodológico inserido.
+- Diagramas de casos de uso, arquitetura e modelo de dados substituídos.
+- Requisitos funcionais e não funcionais corrigidos.
+- Modelo de dados atualizado com campos de agendamento.
+- Validação corrigida com resultado real de dotnet test.
+- Recuperação de senha marcada como não implementada.
+- Tag acadêmica não publicada removida do apêndice E.
+- Apêndices B e C substituídos por matriz de rastreabilidade e evidências técnicas.
+- Referências revisadas e complementadas.

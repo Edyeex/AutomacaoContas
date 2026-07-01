@@ -1,0 +1,16 @@
+Arquivo gerado: C:\temp\PDS\Documents\AUTODOWNLOAD_ajustado_parecer_v6.docx
+Ajustes aplicados somente conforme Parecer V6:
+1. Título corrigido com espaço após dois-pontos.
+2. Resumo ampliado para mais de 150 palavras.
+3. Concordância da titulação do orientador corrigida.
+4. Palavras-chave reduzidas e .NET grafado corretamente.
+5. Escopo textual limitado a internet, telefonia e telecomunicações.
+6. Legenda da Figura 1 padronizada e mantida com a imagem.
+7. Numeração contínua das figuras do corpo e ajuste das figuras D no apêndice.
+8. Modelo de dados visual atualizado com campos de agendamento.
+9. Quadro 6 sem duplicidade contraditória.
+10. Apêndice C mantido coerente com validação parcial.
+11. Comando dotnet test formatado e transcrito.
+12. Códigos RF/RNF padronizados.
+14. Registro acadêmico identificado por hash.
+15. Referências online ajustadas com [s.d.] e acentos corrigidos.

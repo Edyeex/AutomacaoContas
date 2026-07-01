@@ -3,8 +3,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppBrand from "./AppBrand";
+import ThemeToggle from "./ThemeToggle";
 import { clearSession, getSession } from "../lib/apiClient";
-import { applyTheme, getStoredTheme, saveTheme } from "../lib/themeState";
 import {
   fallbackUnreadCount,
   fetchUnreadCount,
@@ -84,17 +84,12 @@ export default function TopBar() {
   const [user, setUser] = useState(null);
   const [unreadCount, setUnreadCount] = useState(fallbackUnreadCount());
   const [menuOpen, setMenuOpen] = useState(false);
-  const [theme, setTheme] = useState("light");
 
   useEffect(() => {
     const session = getSession();
     if (session?.user) {
       setUser(session.user);
     }
-
-    const storedTheme = getStoredTheme();
-    setTheme(storedTheme);
-    applyTheme(storedTheme);
 
     async function loadUnreadCount() {
       try {
@@ -136,11 +131,6 @@ export default function TopBar() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [menuOpen]);
-
-  function changeTheme(nextTheme) {
-    setTheme(nextTheme);
-    saveTheme(nextTheme);
-  }
 
   function handleLogout() {
     clearSession();
@@ -231,21 +221,8 @@ export default function TopBar() {
 
               <div className="account-menu-section">
                 <div className="account-menu-label">Tema do site</div>
-                <div className="theme-switch" role="group" aria-label="Tema do site">
-                  <button
-                    type="button"
-                    className={theme === "light" ? "active" : ""}
-                    onClick={() => changeTheme("light")}
-                  >
-                    Modo claro
-                  </button>
-                  <button
-                    type="button"
-                    className={theme === "dark" ? "active" : ""}
-                    onClick={() => changeTheme("dark")}
-                  >
-                    Modo escuro
-                  </button>
+                <div className="theme-switch">
+                  <ThemeToggle className="account-theme-toggle" showText />
                 </div>
               </div>
 
