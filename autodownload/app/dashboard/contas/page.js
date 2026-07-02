@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "../../lib/apiClient";
 import { useApiResource } from "../../lib/useApiResource";
 import { publishDashboardCountsChanged } from "../../lib/dashboardState";
@@ -10,6 +10,7 @@ import PasswordInput from "../../components/PasswordInput";
 const AUTOMATION_RUN_TIMEOUT_MS = 210000;
 const AUTOMATION_SLOW_NOTICE_SECONDS = 45;
 const SAVED_PASSWORD_MASK = "********";
+const emptyAccountForm = { operadoraId: "", login: "", senha: "", unidade: "" };
 
 function formatDate(d) {
   return d ? new Date(d).toLocaleDateString("pt-BR") : "-";
@@ -35,7 +36,8 @@ export default function ContasPage() {
   const [scheduleItem, setScheduleItem] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
   const [confirmationBusy, setConfirmationBusy] = useState(false);
-  const [form, setForm] = useState({ operadoraId: "", login: "", senha: "", unidade: "" });
+  const [form, setForm] = useState(emptyAccountForm);
+  const [formNonce, setFormNonce] = useState(() => Date.now());
   const [scheduleForm, setScheduleForm] = useState({ enabled: true, mode: "day", day: "1", time: "09:00" });
   const [formError, setFormError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -45,6 +47,7 @@ export default function ContasPage() {
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const [runningAccountId, setRunningAccountId] = useState(null);
   const [runningSeconds, setRunningSeconds] = useState(0);
+  const accountFormRef = useRef(null);
   const accountCount = list.length;
   const selectedOperator = apiOperadoras.find((op) => String(op.id) === form.operadoraId);
 
@@ -65,10 +68,26 @@ export default function ContasPage() {
     return () => window.clearInterval(timer);
   }, [runningAccountId]);
 
+  useEffect(() => {
+    if (modal !== "add") return undefined;
+
+    function clearAddForm() {
+      accountFormRef.current?.reset();
+      setForm({ ...emptyAccountForm });
+      setFieldErrors({});
+      setFormError("");
+    }
+
+    clearAddForm();
+    const autofillTimer = window.setTimeout(clearAddForm, 120);
+    return () => window.clearTimeout(autofillTimer);
+  }, [modal, formNonce]);
+
   function openAdd() {
     if (accountCount >= 3) return;
     clearPageMessage();
-    setForm({ operadoraId: "", login: "", senha: "", unidade: "" });
+    setForm({ ...emptyAccountForm });
+    setFormNonce(Date.now());
     setFormError("");
     setFieldErrors({});
     setOperatorPickerOpen(false);
@@ -212,9 +231,15 @@ export default function ContasPage() {
   }
 
   async function persistAccount(op) {
+    const isAdding = modal === "add";
+
     if (usingFallback) {
       saveLocally(op);
       closeModal();
+      showPageMessage(
+        isAdding ? `Conta ${op.name} adicionada com sucesso.` : `Conta ${op.name} editada com sucesso.`,
+        "success"
+      );
       return;
     }
 
@@ -226,7 +251,7 @@ export default function ContasPage() {
         unidadeConsumidora: form.unidade,
       };
 
-      if (modal === "add") {
+      if (isAdding) {
         await apiRequest("/accounts", { method: "POST", body });
       } else {
         await apiRequest(`/accounts/${editItem.id}`, { method: "PUT", body });
@@ -236,8 +261,12 @@ export default function ContasPage() {
       publishDashboardCountsChanged();
       await refreshUnreadCount();
       closeModal();
+      showPageMessage(
+        isAdding ? `Conta ${op.name} adicionada com sucesso.` : `Conta ${op.name} editada com sucesso.`,
+        "success"
+      );
     } catch (err) {
-      setFormError(err.message || "Não foi possível salvar a conta.");
+      setFormError(err.message || "Não foi possível salvar a conta. Confira os dados preenchidos e tente novamente.");
     }
   }
 
@@ -324,6 +353,7 @@ export default function ContasPage() {
     clearPageMessage();
     if (usingFallback) {
       setList((prev) => prev.filter((c) => c.id !== id));
+      showPageMessage("Conta removida com sucesso.", "success");
       return;
     }
 
@@ -332,6 +362,7 @@ export default function ContasPage() {
       await reload();
       publishDashboardCountsChanged();
       await refreshUnreadCount();
+      showPageMessage("Conta removida com sucesso.", "success");
     } catch (err) {
       showPageMessage(err.message || "Não foi possível remover a conta.");
     }
@@ -432,10 +463,10 @@ export default function ContasPage() {
 
   function runningHint() {
     if (runningSeconds >= AUTOMATION_SLOW_NOTICE_SECONDS) {
-      return "Ainda em execução. No site hospedado a automação roda no servidor em modo oculto e pode demorar mais.";
+      return `Automação em andamento, aguarde por favor. Tempo decorrido: ${formatElapsed(runningSeconds)}`;
     }
 
-    return `Aguarde. Tempo decorrido: ${formatElapsed(runningSeconds)}`;
+    return `Aguarde por favor. Tempo decorrido: ${formatElapsed(runningSeconds)}`;
   }
 
   function pageMessageColor() {
@@ -464,7 +495,7 @@ export default function ContasPage() {
       <div className="page-body">
         {(loading || error || pageMessage) && (
           <p style={{ fontSize: 13, color: pageMessageColor(), marginBottom: 12 }}>
-            {loading ? "Carregando contas..." : pageMessage || error || "Nao foi possivel carregar as contas agora."}
+            {loading ? "Carregando contas..." : pageMessage || error || "Não foi possível carregar as contas agora."}
           </p>
         )}
 
@@ -472,7 +503,7 @@ export default function ContasPage() {
           <div className="automation-run-alert" role="status" aria-live="polite">
             <span className="automation-spinner" aria-hidden="true" />
             <div>
-              <strong>Executando automação no servidor</strong>
+              <strong>Automação em andamento</strong>
               <span>{runningHint()}</span>
             </div>
           </div>
@@ -576,7 +607,7 @@ export default function ContasPage() {
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleSave}>
+            <form ref={accountFormRef} onSubmit={handleSave} autoComplete="off">
               <div className="modal-body">
                 {formError && (
                   <p style={{ color: "var(--danger)", fontSize: 13, marginBottom: 12 }}>{formError}</p>
@@ -636,11 +667,16 @@ export default function ContasPage() {
                 <div className="form-group">
                   <label>Login no portal</label>
                   <input
+                    key={`account-login-${modal}-${formNonce}`}
+                    name={`account-portal-login-${formNonce}`}
                     className={`form-input ${fieldErrors.login ? "is-invalid" : ""}`}
                     type="text"
                     value={form.login}
                     onChange={(e) => update("login", e.target.value)}
-                    placeholder="Usuário ou e-mail do portal"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck="false"
                     aria-invalid={Boolean(fieldErrors.login)}
                   />
                   {fieldErrors.login && <p className="field-error">{fieldErrors.login}</p>}
@@ -648,6 +684,8 @@ export default function ContasPage() {
                 <div className="form-group">
                   <label>Senha do portal</label>
                   <PasswordInput
+                    key={`account-password-${modal}-${formNonce}`}
+                    name={`account-portal-password-${formNonce}`}
                     inputClassName={`form-input ${fieldErrors.senha ? "is-invalid" : ""}`}
                     value={form.senha}
                     onChange={(e) => update("senha", e.target.value)}
@@ -657,7 +695,8 @@ export default function ContasPage() {
                       }
                     }}
                     onReveal={modal === "edit" ? revealPortalPassword : undefined}
-                    placeholder={modal === "edit" ? "Informe uma nova senha para alterar" : "Senha de acesso"}
+                    placeholder={modal === "edit" ? "Informe uma nova senha para alterar" : ""}
+                    autoComplete="new-password"
                     aria-invalid={Boolean(fieldErrors.senha)}
                   />
                   {fieldErrors.senha && <p className="field-error">{fieldErrors.senha}</p>}
@@ -670,11 +709,16 @@ export default function ContasPage() {
                 <div className="form-group">
                   <label>Documento/contrato da conta</label>
                   <input
+                    key={`account-identifier-${modal}-${formNonce}`}
+                    name={`account-identifier-${formNonce}`}
                     className={`form-input ${fieldErrors.unidade ? "is-invalid" : ""}`}
                     type="text"
                     value={form.unidade}
                     onChange={(e) => update("unidade", e.target.value)}
-                    placeholder="CPF, UC, matrícula ou contrato"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck="false"
                     aria-invalid={Boolean(fieldErrors.unidade)}
                   />
                   {fieldErrors.unidade && <p className="field-error">{fieldErrors.unidade}</p>}

@@ -65,7 +65,7 @@ public sealed class AccountService
         {
             return Result<AccountPortalPasswordResponse>.Failure(Error.Failure(
                 "account.portal_password_unreadable",
-                "Nao foi possivel ler a senha cadastrada. Edite a conta e informe a senha novamente."));
+                "Não foi possível ler a senha cadastrada. Edite a conta e informe a senha novamente."));
         }
     }
 
@@ -98,6 +98,13 @@ public sealed class AccountService
                 clock.Now);
 
             await accounts.AddAsync(account, cancellationToken);
+            await notifications.AddAsync(
+                Notification.Create(
+                    userId,
+                    $"Conta {operatorCompany.Name} adicionada com sucesso.",
+                    NotificationType.Success,
+                    clock.Now),
+                cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result<AccountResponse>.Success(account.ToResponse(operatorCompany));

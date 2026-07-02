@@ -92,14 +92,14 @@ export async function apiRequest(path, options = {}) {
   } catch (err) {
     if (err?.name === "AbortError") {
       throw new ApiError(
-        "A operacao demorou mais do que o esperado. Confira o historico e as notificacoes em instantes.",
+        "A operação demorou mais do que o esperado. Confira o histórico e as notificações em instantes.",
         408,
         "request.timeout"
       );
     }
 
     throw new ApiError(
-      "Nao foi possivel conectar ao servidor agora. Verifique se a API esta ativa e tente novamente.",
+      "Não foi possível conectar ao servidor agora. Verifique se a API está ativa e tente novamente.",
       0,
       "network.error"
     );
@@ -122,7 +122,7 @@ export async function apiRequest(path, options = {}) {
     }
 
     throw new ApiError(
-      payload?.detail || payload?.title || "Não foi possível concluir a operação.",
+      problemMessage(payload, "Não foi possível concluir a operação."),
       response.status,
       payload?.code || payload?.title
     );
@@ -154,7 +154,7 @@ export async function apiDownload(path, fallbackFileName = "download.pdf") {
     }
 
     throw new ApiError(
-      payload?.detail || payload?.title || "Não foi possível baixar o arquivo.",
+      problemMessage(payload, "Não foi possível baixar o arquivo."),
       response.status,
       payload?.code || payload?.title
     );
@@ -169,6 +169,23 @@ export async function apiDownload(path, fallbackFileName = "download.pdf") {
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+}
+
+function problemMessage(payload, fallback) {
+  if (!payload) return fallback;
+
+  if (payload.detail || payload.title) {
+    return payload.detail || payload.title;
+  }
+
+  if (payload.errors && typeof payload.errors === "object") {
+    const messages = Object.values(payload.errors).flat().filter(Boolean);
+    if (messages.length > 0) {
+      return messages[0];
+    }
+  }
+
+  return fallback;
 }
 
 function filenameFromContentDisposition(contentDisposition) {

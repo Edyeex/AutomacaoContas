@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
+  const [validationAttempt, setValidationAttempt] = useState(0);
 
   useEffect(() => {
     function clearLoginFields() {
@@ -38,21 +39,35 @@ export default function LoginPage() {
     };
   }, []);
 
+  function markInvalidCredentials() {
+    const message = "E-mail ou senha incorretos.";
+
+    setFieldErrors({
+      email: message,
+      senha: message,
+    });
+    setValidationAttempt((current) => current + 1);
+    setError(message);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    const currentEmail = email || document.getElementById("login-email")?.value || "";
+    const currentPassword = senha || document.getElementById("login-password")?.value || "";
     const nextFieldErrors = {};
 
-    if (!email.trim()) {
+    if (!currentEmail.trim()) {
       nextFieldErrors.email = "E-mail é obrigatório.";
     }
 
-    if (!senha) {
+    if (!currentPassword) {
       nextFieldErrors.senha = "Senha é obrigatória.";
     }
 
     if (Object.keys(nextFieldErrors).length > 0) {
       setFieldErrors(nextFieldErrors);
+      setValidationAttempt((current) => current + 1);
       setError("Preencha os campos obrigatórios.");
       return;
     }
@@ -61,11 +76,16 @@ export default function LoginPage() {
       const auth = await apiRequest("/auth/login", {
         method: "POST",
         auth: false,
-        body: { email, password: senha },
+        body: { email: currentEmail, password: currentPassword },
       });
       saveSession(auth);
       router.push("/dashboard");
     } catch (err) {
+      if (err?.code === "auth.invalid_credentials" || err?.status === 401) {
+        markInvalidCredentials();
+        return;
+      }
+
       setError(err.message || "Não foi possível entrar.");
     }
   }
@@ -86,10 +106,11 @@ export default function LoginPage() {
           {error && (
             <p style={{ color: "var(--danger)", fontSize: 13, marginBottom: 12 }}>{error}</p>
           )}
-          <form ref={formRef} onSubmit={handleSubmit} autoComplete="off">
+          <form ref={formRef} onSubmit={handleSubmit} autoComplete="off" noValidate>
             <div className="form-group">
               <label htmlFor="login-email">E-mail</label>
               <input
+                key={`login-email-${validationAttempt}`}
                 id="login-email"
                 name="autodownload-login-email"
                 className={`form-input ${fieldErrors.email ? "is-invalid" : ""}`}
@@ -98,6 +119,7 @@ export default function LoginPage() {
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setFieldErrors((prev) => ({ ...prev, email: "" }));
+                  setError("");
                 }}
                 placeholder="seu@email.com"
                 autoComplete="off"
@@ -111,6 +133,7 @@ export default function LoginPage() {
             <div className="form-group">
               <label htmlFor="login-password">Senha</label>
               <PasswordInput
+                key={`login-password-${validationAttempt}`}
                 id="login-password"
                 name="autodownload-login-password"
                 inputClassName={`form-input ${fieldErrors.senha ? "is-invalid" : ""}`}
@@ -118,6 +141,7 @@ export default function LoginPage() {
                 onChange={(e) => {
                   setSenha(e.target.value);
                   setFieldErrors((prev) => ({ ...prev, senha: "" }));
+                  setError("");
                 }}
                 autoComplete="new-password"
                 placeholder="••••••••"
